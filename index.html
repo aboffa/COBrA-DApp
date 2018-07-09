@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>COBrA DApp</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <!-- substitute panel with cards<link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">-->
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="text-center">
+            <img src="images/s1200.webp" height="256" width="256">
+            <h1>
+                <strong>COBrA DApp</strong>
+            </h1>
+            <h2 id="current-eth-address"></h2>
+            <h2 id="current-eth-balance"></h2>
+            <h2 id="current-eth-place"></h2>
+        <br> </br>
+        <div id="loginpanel" class="panel panel-success">
+        </div>
+        <div id='actionspanelcustomer' class="panel panel-primary">
+            <div class='panel-heading'>Actions as Customer</div>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Get a Content</div>
+                <label>Name of the content:</label>
+                <input type='text' class='form-control' id='namecontent' placeholder='Name of the content'>
+                <button id='buttontogetaccesscontent' type='button' class='btn btn-primary'>Get access to content</button>
+            </div>
+            <br>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Consume content</div>
+                <label>Name of the content:</label>
+                <input type='text' class='form-control' id='namecontentconsume' placeholder='Name of the content'>
+                <button id="buttontogetcontent" type='button' class='btn btn-primary'>Get Content</button>
+            </div>
+        </div>
+        <div id='actionspanelartist' class='panel panel-primary'>
+            <div class='panel-heading'>Actions as Artist</div>
+            <div id='publishpanel' class='panel panel-default'>
+                <div class='panel-heading'>Publish a Content</div>
+                <label>Name of the content:</label>
+                <input type='text' class='form-control mr-sm-2' id='namecontenttopublish' placeholder='Name of the content'>
+                <label>Genre of the content:</label>
+                <input type='text' class='form-control' id='genrecontent' placeholder='Genre of the content'>
+                <label>Your name as Artist:</label>
+                <input type='text' class='form-control' id='artistname' placeholder='Your name as Artist'>
+                <label>Data of the content:</label>
+                <input type='text' class='form-control' id='datacontent' placeholder='Data of the content'>
+                <label>Price of the content in Ether:</label>
+                <select class="form-control" id="pricecontent">
+                    <option>0.05</option>
+                    <option>0.1</option>
+                    <option>0.15</option>
+                    <option>0.2</option>
+                    <option>0.25</option>
+                    <option>0.3</option>
+                    <option>0.35</option>
+                    <option>0.4</option>
+                    <option>0.45</option>
+                    <option>0.5</option>
+                </select>
+                <form id="wichcontract">
+                    <label class="radio-inline">
+                        <input type="radio" name="optradio" checked="checked"  > &nbsp &nbsp &nbsp &nbsp Deafualt Contract</label>
+                    <label class="radio-inline">
+                        <input type="radio" name="optradio"> &nbsp &nbsp &nbsp &nbsp Custom Contract</label>
+                </form>
+                <button id='buttontopublishcontent' class='btn btn-primary'>Publish content</button>
+                <br>
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@0.20.6/ retrodist/web3.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.js"></script>
+    <script src="ABIandAdresses.js"></script>
+    <!--<script src="bundle.js"></script>-->
+    <script src="main1.0.js"></script>
+</body>
+
+</html>
