@@ -38,7 +38,6 @@ contract CatalogSmartContract {
         emit NewContentEvent(genre_, authorName_);
     }
     
-    //bytes32
     function GetContent(bytes32 name_) payable public returns (address cm) {
         cm = fromNametoContent[name_];
         require(cm != address(0));
@@ -49,10 +48,11 @@ contract CatalogSmartContract {
         emit ContenAccessObtained("contenuto ottenuto", cm );
     }
     
-    function GetContentPremium(bytes32 name_) view public returns (address cm) {
-        cm = fromNametoContent[name_];
-        //require(cm != address(0));
-        cm.call("setEnabled",msg.sender);
+    function GetContentPremium(bytes32 name_) public {
+        address cm = fromNametoContent[name_];
+        require(cm != address(0), "This concent doesn't exist!");
+        ContentManagementContract cmccasted = ContentManagementContract(cm);
+        cmccasted.setEnabled(msg.sender);
         emit ContenAccessObtained("contenuto ottenuto", cm);
     }
     
@@ -62,6 +62,12 @@ contract CatalogSmartContract {
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         price =  cmccasted.price();
     }
+    
+    function getAddressContent(bytes32 name_ ) view public returns (address cm){
+        cm = fromNametoContent[name_];
+        require(cm != address(0));
+    
+}
     function GiftPremium(address a)  payable public{
         require(msg.value >= WeiForPremium);
         premiumCustomers[a] = true;
@@ -73,22 +79,12 @@ contract CatalogSmartContract {
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price );
-        cm.call("setEnabled",a);
+        cmccasted.setEnabled(a);
         emit ContenAccessGifted("contenuto ottenuto", cm );
     }
+    
     function isPremium(address a)  public view returns (bool ok) {
         ok = premiumCustomers[a];
-    }
-    
-    function stringToBytes32(string memory source) public pure  returns (bytes32 result) {
-        //this in javasript
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-        assembly {
-            result := mload(add(source, 32))
-        }
     }
 
     function close() public onlyOwner {

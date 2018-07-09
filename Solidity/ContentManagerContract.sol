@@ -2,31 +2,17 @@ pragma solidity ^0.4.0;
 
 
 contract ContentManagementContract{
-    //better enum
     bytes32 public genre;
     bytes32 public name;
     bytes32 public data;
     address public authorAddress;
     bytes32 public authorName;
     address public catalog;
-    //maybe price useless
     uint public price;
-    mapping (address => bool) public enabledCustomers;
+    mapping (address => bool) public AuthorizedCustomers;
     
     event canLeaveAFeedBack(string s);
 
-    function stringToBytes32(string memory source) public pure  returns (bytes32 result) {
-        //this in javasript
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-    
-        assembly {
-            result := mload(add(source, 32))
-        }
-    }
-    
     constructor (bytes32 name_, bytes32 genre_, bytes32 data_, uint price_ , bytes32 authorName_, address catalog_) public {
         catalog = catalog_;
         name = name_;
@@ -45,14 +31,22 @@ contract ContentManagementContract{
         _;
     }
     
-    function setEnabled(address addr) public onlyCatalog {
-        enabledCustomers[addr] = true;
+    modifier onlyAuthorized {
+        require(
+            AuthorizedCustomers[msg.sender],
+            "Only customer that payed can access to this Content."
+        );
+        _;
     }
     
-    function retriveContent() public returns (bytes32 data_) {
-        if (enabledCustomers[msg.sender]){
-            enabledCustomers[msg.sender] = false;
-            data_ =  data;
-        }
+    function setEnabled(address addr) public onlyCatalog {
+        AuthorizedCustomers[addr] = true;
+    }
+    
+    function retriveContent() public onlyAuthorized returns (bytes32 data_) {
+        AuthorizedCustomers[msg.sender] = false;
+        data_ =  data;
+        emit canLeaveAFeedBack("You can leave a feedback");
+        
     }
 }
