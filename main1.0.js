@@ -46,7 +46,8 @@ function setUpUI(isPremium) {
         //console.log(name, genre, data, price, artistname);
         let contract;
         //getting the compiled contract
-        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA/master/prova?token=Aazol3loy3uZAUWP2KIfrEnPbqEvtF_kks5bShcxwA%3D%3D", function (data) {
+        //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
+        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA-DApp/master/misc/contentContract.json?token=Aazol_lxVPDQcB3TuOjAMU0h9EjdoXXsks5bTJyDwA%3D%3D", function (data) {
             //console.log(data);
             let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
             let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
@@ -68,19 +69,19 @@ function setUpUI(isPremium) {
                     console.log("Ok");
                 })
                 .catch(err => console.log(err));
-
         })
     });
     if (isPremium) {
         //Premium customer
         console.log("Setting up premium ui");
         $("#loginpanel").append("<div class='panel-heading'>Logged in as Premium Account</div>");
-
         $("#buttontogetaccesscontent").click(function () {
             let namecontent = $("#namecontent").val();
             let namecontentbytes = web3.utils.asciiToHex(namecontent);
-            CatalogSmartContract.methods.GetContentPremium(namecontentbytes).call()
-                .then("content access obtained")
+            console.log(namecontent)
+            CatalogSmartContract.methods.GetContentPremium(namecontentbytes)
+                .send({from: web3.eth.defaultAccount })
+                .then(result => result+ "content access obtained")
                 .catch(err => console.log(err));
         })
 

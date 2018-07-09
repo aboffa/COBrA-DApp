@@ -51,7 +51,7 @@ contract CatalogSmartContract {
     
     function GetContentPremium(bytes32 name_) view public returns (address cm) {
         cm = fromNametoContent[name_];
-        require(cm != address(0));
+        //require(cm != address(0));
         cm.call("setEnabled",msg.sender);
         emit ContenAccessObtained("contenuto ottenuto", cm);
     }
