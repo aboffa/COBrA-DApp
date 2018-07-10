@@ -24,12 +24,20 @@ contract CatalogSmartContract {
         _;
     }
 
+    modifier isStillPremium {
+        require(
+            isPremium(msg.sender),
+            "Your premium account is expired."
+        );
+        _;
+    }
+
     constructor () public {
         owner = msg.sender;
     }
 
     function BuyPremium() public payable  {
-        require (msg.value >= WeiForPremium );
+        require (msg.value >= WeiForPremium);
         premiumCustomers[msg.sender] = block.number + BlockForPremium;
     }
     
@@ -41,7 +49,7 @@ contract CatalogSmartContract {
     
     function GetContent(bytes32 name_) payable public returns (address cm) {
         cm = fromNametoContent[name_];
-        require(cm != address(0), "This concent doesn't exist!");
+        require(cm != address(0), "This content doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price );
@@ -49,10 +57,9 @@ contract CatalogSmartContract {
         emit ContenAccessObtained("contenuto ottenuto", cm );
     }
     
-    function GetContentPremium(bytes32 name_) public {
+    function GetContentPremium(bytes32 name_) public isStillPremium {
         address cm = fromNametoContent[name_];
-        require(cm != address(0), "This concent doesn't exist!");
-        require (premiumCustomers[msg.sender] > block.number);
+        require(cm != address(0), "This content doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         cmccasted.setEnabledPremium(msg.sender, premiumCustomers[msg.sender]);
         emit ContenAccessObtained("contenuto ottenuto", cm);
@@ -62,14 +69,14 @@ contract CatalogSmartContract {
         address cm = fromNametoContent[name_];
         require(cm != address(0));
         ContentManagementContract cmccasted = ContentManagementContract(cm);
-        price =  cmccasted.price();
+        price = cmccasted.price();
     }
     
-    function getAddressContent(bytes32 name_ ) view public returns (address cm){
+    function getAddressContent(bytes32 name_) view public returns (address cm){
         cm = fromNametoContent[name_];
         require(cm != address(0));
     
-}
+    }
     function GiftPremium(address a)  payable public{
         require(msg.value >= WeiForPremium);
         premiumCustomers[a] = block.number + BlockForPremium;
@@ -82,13 +89,49 @@ contract CatalogSmartContract {
         uint price = cmccasted.price();
         require(msg.value >= price );
         cmccasted.setEnabledStandard(a);
-        emit ContenAccessGifted("contenuto ottenuto", cm );
+        emit ContenAccessGifted("contenuto ottenuto", cm);
     }
     
     function isPremium(address a)  public view returns (bool ok) {
         ok = (premiumCustomers[a] > block.number);
     }
 
+    //Statistics
+    
+    function GetStatistics() public view returns (uint[] viewsarray ){
+        viewsarray = new uint[](contentManagers.length);
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            viewsarray[i] = cmccasted.views();
+        }
+    }
+    
+    function GetContentList() public view returns (bytes32[] result) {
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            result[i] = cmccasted.name();
+        }
+    }
+    /*
+    function GetNewContentList() public view returns (bytes32[] result){
+        
+    }
+    
+    function GetLatestByGenre(bytes32 genre) public view returns (bytes32[] result){
+        
+    }
+    function GetMostPopularByGenre(bytes32 genre) public view returns (bytes32[] result){
+        
+    }
+
+    function GetLatestByAuthor(bytes32 author) public view returns (bytes32[] result){
+        
+    }    
+    
+    function GetMostPopularByAuthor(bytes32 author) public view returns (bytes32[] result ){
+        
+    }
+    */
     function close() public onlyOwner {
         selfdestruct(owner);
     }

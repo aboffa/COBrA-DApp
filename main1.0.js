@@ -1,5 +1,6 @@
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
+$("#actionspanelstatistic").hide();
 var web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
 console.log(web3);
 
@@ -8,7 +9,7 @@ var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data)
-        web3.eth.defaultAccount = data[8];
+        web3.eth.defaultAccount = data[9];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -23,32 +24,35 @@ web3.eth.getAccounts()
     .then(function (isPremium) {
         $("#actionspanelcustomer").show();
         $("#actionspanelartist").show();
+        $("#actionspanelstatistic").show();
         setUpEvents();
         setUpUI(isPremium);
 
     })
-    .catch(err => console.log(err));
+    .catch( function (err) {
+        console.log(err);
+        $("#loginpanel").attr("class", "panel panel-danger");    
+        $("#loginpanel").append("<div class='panel-heading'>"+err.toString()+"</div>");
+    });
 
 function setUpUI(isPremium) {
-    //Setting up buttons action
-
+    //Setting up Buttons action
+    //Button action for Artist Panel
     $("#buttontopublishcontent").click(function () {
         //parse input
         let name = $("#namecontenttopublish").val();
         let namebyte = web3.utils.asciiToHex(name);
         let genre = $("#genrecontent").val();
         let genrebytes = web3.utils.asciiToHex(genre);
-        let datacontent = $("#datacontent").val();
-        let datacontentbyte = web3.utils.asciiToHex(datacontent);
         let price = $("#pricecontent").val();
         let priceint = Number(web3.utils.toWei(price, 'ether'));
         let artistname = $("#artistname").val();
         let artistnamebyte = web3.utils.asciiToHex(artistname);
         //console.log(name, genre, data, price, artistname);
-        let contract;
         //getting the compiled contract
         //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
-        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA-DApp/master/Solidity/bin/contentContract.json?token=Aazol4O4RG8PJ9YW6ivip4CwsaY8wpduks5bTaLSwA%3D%3D", function (data) {
+        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA-DApp/master/Solidity/bin/contentContract.json?token=Aazol6HKzzF0Y96Wi2t_pZdJRLi9Cdysks5bTby3wA%3D%3D",
+        function (data) {
             //console.log(data);
             let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
             let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
@@ -56,12 +60,12 @@ function setUpUI(isPremium) {
             let bytecode = data.contracts["ContentManagerContract.sol:ContentManagementContract"].bytecode;
             web3.eth.estimateGas({ data: bytecode })
                 .then(function (gasEstimate) {
-                    console.log("" + gasEstimate);
+                    console.log(gasEstimate);
                     let myContract = new web3.eth.Contract(abi, { gas: 30000000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
                     return myContract
-                        .deploy({ data: code, arguments: [namebyte, genrebytes, datacontentbyte, priceint, artistnamebyte, catalogAddress] })
+                        .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
                         // no 15*, check effective gas usage
-                        .send({ value: 0, gas: 15*gasEstimate, gasPrice: '100000000000' })
+                        .send({ value: 0, gas: 1500000, gasPrice: '100000000000' })
                 })
                 .then(function (newContractInstance) {
                     console.log(newContractInstance);
@@ -74,9 +78,10 @@ function setUpUI(isPremium) {
                 .catch(err => console.log(err));
         })
     });
+    // Button action for Statistic panel
 
     if (isPremium) {
-        //Premium customer
+        //Button action for Premium customer
         console.log("Setting up premium ui");
         $("#loginpanel").append("<div class='panel-heading'>Logged in as Premium Account</div>");
         $("#buttontogetaccesscontent").click(function () {
@@ -100,12 +105,12 @@ function setUpUI(isPremium) {
                     return ContentManagementContract.methods.retriveContentPremium()
                         .send({  value: 0, gas: 1500000, gasPrice: '100000000000',from: web3.eth.defaultAccount })
                 })
-                .then(console.log("obtained"))
+                .then(result => console.log(result))
                 .catch(err => console.log(err));
         })
     }
     else {
-        //Standard customer
+        //Button action for Standard customer
         console.log("Setting up standard ui");
         $("#loginpanel").append("<div id='standard' class='panel-heading'>Logged in as Standard Account</div><button id='buttonforpremium' type='button' class='btn btn-success'>Get Premium Account (1 ETH) </button>");
         $("#buttonforpremium").click(function () {
