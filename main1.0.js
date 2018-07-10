@@ -8,7 +8,7 @@ var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data)
-        web3.eth.defaultAccount = data[0];
+        web3.eth.defaultAccount = data[8];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -17,7 +17,8 @@ web3.eth.getAccounts()
         $("#current-eth-place").text("on : " + web3.currentProvider.host);
         CatalogSmartContract = new web3.eth.Contract(abiCatalog, catalogAddress);
         console.log(CatalogSmartContract);
-        return CatalogSmartContract.methods.isPremium(web3.eth.defaultAccount).call();
+        return CatalogSmartContract.methods.isPremium(web3.eth.defaultAccount)
+            .call();
     })
     .then(function (isPremium) {
         $("#actionspanelcustomer").show();
@@ -47,7 +48,7 @@ function setUpUI(isPremium) {
         let contract;
         //getting the compiled contract
         //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
-        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA-DApp/master/misc/contentContract.json?token=Aazol5zjpuIJq5lWh8JsOzi8RDnQAmuIks5bTJ8BwA%3D%3D", function (data) {
+        $.getJSON("https://raw.githubusercontent.com/aboffa/COBrA-DApp/master/Solidity/bin/contentContract.json?token=Aazol4O4RG8PJ9YW6ivip4CwsaY8wpduks5bTaLSwA%3D%3D", function (data) {
             //console.log(data);
             let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
             let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
@@ -64,7 +65,6 @@ function setUpUI(isPremium) {
                 })
                 .then(function (newContractInstance) {
                     console.log(newContractInstance);
-                    myContentCache.set("name", newContractInstance.options.address);
                     return CatalogSmartContract.methods.NewContent(newContractInstance.options.address, genrebytes, artistnamebyte, namebyte)
                         .send({ from: web3.eth.defaultAccount });
                 })
@@ -74,19 +74,7 @@ function setUpUI(isPremium) {
                 .catch(err => console.log(err));
         })
     });
-    $("#buttontogetcontent").click(function () {
-        let namebytes = web3.utils.asciiToHex($("#buttontogetcontent").val());
-        CatalogSmartContract.methods.getAddressContent(namebytes)
-            .call()
-            .then(function (address) {
-                console.log(address);
-                let ContentManagementContract = web3.eth.Contract(abiContent, address);
-                ContentManagementContract.methods.retriveContent()
-                    .send({ from: web3.eth.defaultAccount })
-                    .then(console.log("obtained"))
-                    .catch(err => console.log(err));
-            })
-    })
+
     if (isPremium) {
         //Premium customer
         console.log("Setting up premium ui");
@@ -100,7 +88,21 @@ function setUpUI(isPremium) {
                     console.log(result);
                 })
                 .catch(err => console.log(err));
-        });
+        }); 
+
+        $("#buttontogetcontent").click(function () {
+            let namebytes = web3.utils.asciiToHex($("#buttontogetcontent").val());
+            CatalogSmartContract.methods.getAddressContent(namebytes)
+                .call()
+                .then(function (address) {
+                    console.log(address);
+                    let ContentManagementContract = web3.eth.Contract(abiContent, address);
+                    return ContentManagementContract.methods.retriveContentPremium()
+                        .send({  value: 0, gas: 1500000, gasPrice: '100000000000',from: web3.eth.defaultAccount })
+                })
+                .then(console.log("obtained"))
+                .catch(err => console.log(err));
+        })
     }
     else {
         //Standard customer
@@ -122,18 +124,34 @@ function setUpUI(isPremium) {
         $("#buttontogetaccesscontent").click(function () {
             let namecontent = $("#namecontent").val();
             let namecontentbytes = web3.utils.asciiToHex(namecontent);
-            ContentManagementContract.methods.getPriceContent(namecontentbytes).call()
+            CatalogSmartContract.methods.getPriceContent(namecontentbytes)
+                .call()
                 .then(function (price) {
-                    if (window.confirm("Buying premium costs " + price + " ether. Do you agree?")) {
+                    if (window.confirm("Buying this content costs " +  web3.utils.fromWei(price, 'ether') + " ether. Do you agree?")) {
                         CatalogSmartContract.methods.GetContent(namecontentbytes)
                             .send({ value: price, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
-                            .then(function (result) {
-                                console.log(result);
+                            .then(function (transaction) {
+                                console.log(transaction);
+                                alert("Payed "+ web3.utils.fromWei(price, 'ether')+ " Ether! Transaction hash = " + transaction.transactionHash);
                             })
                             .catch(err => console.log(err));
                     }
                 })
         });
+
+        $("#buttontogetcontent").click(function () {
+            let namebytes = web3.utils.asciiToHex($("#buttontogetcontent").val());
+            CatalogSmartContract.methods.getAddressContent(namebytes)
+                .call()
+                .then(function (address) {
+                    console.log(address);
+                    let ContentManagementContract = web3.eth.Contract(abiContent, address);
+                    return ContentManagementContract.methods.retriveContentStandard()
+                        .send({  value: 0, gas: 1500000, gasPrice: '100000000000',from: web3.eth.defaultAccount })
+                })
+                .then(console.log("obtained"))
+                .catch(err => console.log(err));
+        })
     }
 }
 
@@ -170,5 +188,3 @@ if (!error)
             }
         });
 }
-
-var myContentCache = new Map();

@@ -1,12 +1,13 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.24;
 
 import "./ContentManagerContract.sol";
 
 contract CatalogSmartContract {
     //public for debug
     uint public WeiForPremium = 1000000000000000000;
+    uint public BlockForPremium = 10;
     address owner;
-    mapping (address => bool) public premiumCustomers;
+    mapping (address => uint) public premiumCustomers;
     address[] public contentManagers;
     //maybe not necessary remember view method dont spend gas
     mapping (bytes32 => address) public fromNametoContent;
@@ -22,13 +23,14 @@ contract CatalogSmartContract {
         );
         _;
     }
+
     constructor () public {
         owner = msg.sender;
     }
 
     function BuyPremium() public payable  {
         require (msg.value >= WeiForPremium );
-        premiumCustomers[msg.sender] = true;
+        premiumCustomers[msg.sender] = block.number + BlockForPremium;
     }
     
     function NewContent(address cmc, bytes32 genre_, bytes32 authorName_, bytes32 name_ ) public {
@@ -39,19 +41,20 @@ contract CatalogSmartContract {
     
     function GetContent(bytes32 name_) payable public returns (address cm) {
         cm = fromNametoContent[name_];
-        require(cm != address(0));
+        require(cm != address(0), "This concent doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price );
-        cmccasted.setEnabled(msg.sender);
+        cmccasted.setEnabledStandard(msg.sender);
         emit ContenAccessObtained("contenuto ottenuto", cm );
     }
     
     function GetContentPremium(bytes32 name_) public {
         address cm = fromNametoContent[name_];
         require(cm != address(0), "This concent doesn't exist!");
+        require (premiumCustomers[msg.sender] > block.number);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
-        cmccasted.setEnabled(msg.sender);
+        cmccasted.setEnabledPremium(msg.sender, premiumCustomers[msg.sender]);
         emit ContenAccessObtained("contenuto ottenuto", cm);
     }
     
@@ -69,7 +72,7 @@ contract CatalogSmartContract {
 }
     function GiftPremium(address a)  payable public{
         require(msg.value >= WeiForPremium);
-        premiumCustomers[a] = true;
+        premiumCustomers[a] = block.number + BlockForPremium;
     }
     
     function GiftContent(bytes32 name_, address a)  payable public {
@@ -78,12 +81,12 @@ contract CatalogSmartContract {
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price );
-        cmccasted.setEnabled(a);
+        cmccasted.setEnabledStandard(a);
         emit ContenAccessGifted("contenuto ottenuto", cm );
     }
     
     function isPremium(address a)  public view returns (bool ok) {
-        ok = premiumCustomers[a];
+        ok = (premiumCustomers[a] > block.number);
     }
 
     function close() public onlyOwner {

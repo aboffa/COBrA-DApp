@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.24;
 
 
 contract ContentManagementContract{
@@ -8,10 +8,12 @@ contract ContentManagementContract{
     address public authorAddress;
     bytes32 public authorName;
     address public catalog;
+    uint blockGenerated;
     uint public price;
     uint views;
     
-    mapping (address => bool) public AuthorizedCustomers;
+    mapping (address => uint) public AuthorizedPremiumCustomers;
+    mapping (address => bool) public AuthorizedStandardCustomers;
     
     event canLeaveAFeedBack(string s);
 
@@ -23,6 +25,7 @@ contract ContentManagementContract{
         data = data_;
         price = price_;
         authorName = authorName_;
+        blockGenerated = block.number;
     }
     
     modifier onlyCatalog {
@@ -33,21 +36,38 @@ contract ContentManagementContract{
         _;
     }
     
-    modifier onlyAuthorized {
+    modifier onlyAuthorizedStandard() {
         require(
-            AuthorizedCustomers[msg.sender],
+            AuthorizedStandardCustomers[msg.sender],
             "Only customer that payed can access to this Content."
         );
         _;
     }
     
-    function setEnabled(address addr) public onlyCatalog {
-        AuthorizedCustomers[addr] = true;
+    modifier onlyAuthorizedPremium() {
+        require(
+            (AuthorizedPremiumCustomers[msg.sender] > block.number),
+            "Only customer that payed can access to this Content."
+        );
+        _;
     }
     
-    function retriveContent() public onlyAuthorized {
+    function setEnabledStandard(address addr) public onlyCatalog {
+        AuthorizedStandardCustomers[addr] = true;
+    }
+    
+    function setEnabledPremium(address addr, uint lastblockvalid) public onlyCatalog {
+        AuthorizedPremiumCustomers[addr] = lastblockvalid;
+    }
+    
+    function retriveContentStandard() public onlyAuthorizedStandard {
         views++;
-        AuthorizedCustomers[msg.sender] = false;
+        AuthorizedStandardCustomers[msg.sender] = false;
+        emit canLeaveAFeedBack("You can leave a feedback");
+        
+    }
+    
+    function retriveContentPremium() public onlyAuthorizedPremium {
         emit canLeaveAFeedBack("You can leave a feedback");
         
     }
