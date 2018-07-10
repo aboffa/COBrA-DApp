@@ -9,6 +9,8 @@ contract ContentManagementContract{
     bytes32 public authorName;
     address public catalog;
     uint public price;
+    uint views;
+    
     mapping (address => bool) public AuthorizedCustomers;
     
     event canLeaveAFeedBack(string s);
@@ -43,9 +45,9 @@ contract ContentManagementContract{
         AuthorizedCustomers[addr] = true;
     }
     
-    function retriveContent() public onlyAuthorized returns (bytes32 data_) {
+    function retriveContent() public onlyAuthorized {
+        views++;
         AuthorizedCustomers[msg.sender] = false;
-        data_ =  data;
         emit canLeaveAFeedBack("You can leave a feedback");
         
     }

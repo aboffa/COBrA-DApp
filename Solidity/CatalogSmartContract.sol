@@ -5,11 +5,10 @@ import "./ContentManagerContract.sol";
 contract CatalogSmartContract {
     //public for debug
     uint public WeiForPremium = 1000000000000000000;
-    //check if usefull
-    bytes32 zeros = 0x0000000000000000000000000000000000000000000000000000000000000000;
     address owner;
     mapping (address => bool) public premiumCustomers;
     address[] public contentManagers;
+    //maybe not necessary remember view method dont spend gas
     mapping (bytes32 => address) public fromNametoContent;
     
     event ContenAccessObtained(string s, address addr);
