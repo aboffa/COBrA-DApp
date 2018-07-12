@@ -21,7 +21,7 @@ contract ContentManagementContract{
     
     event canLeaveAFeedBack(string s);
 
-    constructor (bytes32 name_, bytes32 genre_, uint price_ , bytes32 authorName_, address catalog_) public {
+    constructor (bytes32 name_, bytes32 genre_, uint price_,bytes32 authorName_, address catalog_) public {
         catalog = catalog_;
         name = name_;
         genre = genre_;
@@ -29,6 +29,7 @@ contract ContentManagementContract{
         price = price_;
         authorName = authorName_;
         blockGenerated = block.number;
+        views = 0;
     }
     
     modifier onlyCatalog {

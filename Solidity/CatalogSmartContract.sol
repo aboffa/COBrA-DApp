@@ -37,7 +37,7 @@ contract CatalogSmartContract {
     }
 
     function BuyPremium() public payable  {
-        require (msg.value >= WeiForPremium);
+        require (msg.value >= WeiForPremium, "You have to pay the right amount!");
         premiumCustomers[msg.sender] = block.number + BlockForPremium;
     }
     
@@ -52,9 +52,9 @@ contract CatalogSmartContract {
         require(cm != address(0), "This content doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
-        require(msg.value >= price );
+        require(msg.value >= price, "You have to pay the right amount!" );
         cmccasted.setEnabledStandard(msg.sender);
-        emit ContenAccessObtained("contenuto ottenuto", cm );
+        emit ContenAccessObtained("contenuto ottenuto", cm);
     }
     
     function GetContentPremium(bytes32 name_) public isStillPremium {
@@ -67,14 +67,14 @@ contract CatalogSmartContract {
     
     function getPriceContent(bytes32 name_) view public returns (uint price) {
         address cm = fromNametoContent[name_];
-        require(cm != address(0));
+        require(cm != address(0), "This content doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         price = cmccasted.price();
     }
     
     function getAddressContent(bytes32 name_) view public returns (address cm){
         cm = fromNametoContent[name_];
-        require(cm != address(0));
+        require(cm != address(0), "This content doesn't exist!");
     
     }
     function GiftPremium(address a)  payable public{
@@ -84,10 +84,10 @@ contract CatalogSmartContract {
     
     function GiftContent(bytes32 name_, address a)  payable public {
         address cm = fromNametoContent[name_];
-        require(cm != address(0));
+        require(cm != address(0), "This content doesn't exist!");
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
-        require(msg.value >= price );
+        require(msg.value >= price,  "You have to pay the right amount!" );
         cmccasted.setEnabledStandard(a);
         emit ContenAccessGifted("contenuto ottenuto", cm);
     }
@@ -107,6 +107,7 @@ contract CatalogSmartContract {
     }
     
     function GetContentList() public view returns (bytes32[] result) {
+        result = new bytes32[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
             result[i] = cmccasted.name();

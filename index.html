@@ -7,106 +7,125 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>COBrA DApp</title>
     <link rel="stylesheet" type="text/css" href="main.css">
-    <!-- substitute panel with cards<link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">-->
+    <link rel="stylesheet" type="text/css" href="https://bootswatch.com/4/materia/bootstrap.min.css">
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
 
+    
 </head>
 
 <body>
     <div class="container">
         <div class="text-center">
-            <img src="images/s1200.webp" height="256" width="256">
+            <img src="images/img.jpg" height="256" width="256">
+            <br> <br> <br>
             <h1>
                 <strong>COBrA DApp</strong>
             </h1>
-            <h2 id="current-eth-address"></h2>
-            <h2 id="current-eth-balance"></h2>
-            <h2 id="current-eth-place"></h2>
+            <h3 id="current-eth-address"></h3>
+            <h3 id="current-eth-balance"></h3>
+            <h3 id="current-eth-place"></h3>
             <br>
-            <div id="loginpanel" class="panel panel-success">
+            <div id="loginpanel" class="card border-success mb-3">
             </div>
-            <div id='actionspanelcustomer' class="panel panel-primary">
-                <div class='panel-heading'>Actions as Customer</div>
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Get a Content</div>
-                    <label>Name of the content:</label>
-                    <input type='text' class='form-control' id='namecontent' placeholder='Name of the content'>
-                    <button id='buttontogetaccesscontent' type='button' class='btn btn-primary'>Get access to content</button>
-                </div>
-                <br>
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Consume content</div>
-                    <label>Name of the content:</label>
-                    <input type='text' class='form-control' id='namecontentconsume' placeholder='Name of the content'>
-                    <button id="buttontogetcontent" type='button' class='btn btn-primary'>Get Content</button>
-                </div>
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Gift a Content</div>
-                    <label>Name of the content:</label>
-                    <input type='text' class='form-control' id='namecontentgift' placeholder='Name of the content'>
-                    <label>Address of the recipient of the gift:</label>
-                    <input type='text' class='form-control' id='namerecipient' placeholder='Address of the recipient of the gift'>
-                    <button id='buttontogetaccesscontent' type='button' class='btn btn-primary'>Gift Content</button>
-                </div>
-                <br>
+            <div id='actionspanelcustomer' class="card bg-light mb-3">
+                <div class='card-header'>Actions as Customer</div>
+                <div class="card-body">
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header'>Get a Content</div>
+                        <div class="card-body">
+                            <label>Name of the content:</label>
+                            <input type='text' class='form-control' id='namecontent' placeholder='Name of the content'>
+                            <br>
+                            <button id='buttontogetaccesscontent' type='button' class='btn btn-primary '>Get access to content</button>
+                        </div>
+                    </div>
 
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Gift a Premium Account</div>
-                    <label>Name of the recipient of the gift:</label>
-                    <input type='text' class='form-control' id='namerecipientaddress' placeholder='Name of the recipient of the gift'>
-                    <button id='buttontogetaccesscontent' type='button' class='btn btn-primary'>Gift Premium</button>
-                </div>
-                <br>
-            </div>
-            <div id='actionspanelartist' class='panel panel-primary'>
-                <div class='panel-heading'>Actions as Artist</div>
-                <div id='publishpanel' class='panel panel-default'>
-                    <div class='panel-heading'>Publish a Content</div>
-                    <label>Name of the content:</label>
-                    <input type='text' class='form-control mr-sm-2' id='namecontenttopublish' placeholder='Name of the content'>
-                    <label>Genre of the content:</label>
-                    <input type='text' class='form-control' id='genrecontent' placeholder='Genre of the content'>
-                    <label>Your name as Artist:</label>
-                    <input type='text' class='form-control' id='artistname' placeholder='Your name as Artist'>
-                    <label>Price of the content in Ether:</label>
-                    <select class="form-control" id="pricecontent">
-                        <option>0.05</option>
-                        <option>0.1</option>
-                        <option>0.15</option>
-                        <option>0.2</option>
-                        <option>0.25</option>
-                        <option>0.3</option>
-                        <option>0.35</option>
-                        <option>0.4</option>
-                        <option>0.45</option>
-                        <option>0.5</option>
-                    </select>
-                    <form id="wichcontract">
-                        <label class="radio-inline">
-                            <input type="radio" name="optradio" checked="checked"> &nbsp &nbsp &nbsp &nbsp Deafualt Contract</label>
-                        <label class="radio-inline">
-                            <input type="radio" name="optradio"> &nbsp &nbsp &nbsp &nbsp Custom Contract</label>
-                    </form>
-                    <button id='buttontopublishcontent' class='btn btn-primary'>Publish content</button>
                     <br>
-                </div>
-            </div>
+                    <div class='panel panel-default'>
+                        <div class='panel-heading'>Consume content</div>
+                        <label>Name of the content:</label>
+                        <input type='text' class='form-control' id='namecontentconsume' placeholder='Name of the content'>
+                        <br>
+                        <button id="buttontogetcontent" type='button' class='btn btn-primary'>Get Content</button>
+                    </div>
+                    <div class='panel panel-default'>
+                        <div class='panel-heading'>Gift a Content</div>
+                        <label>Name of the content:</label>
+                        <input type='text' class='form-control' id='namecontentgift' placeholder='Name of the content'>
+                        <label>Address of the recipient of the gift:</label>
+                        <input type='text' class='form-control' id='namerecipient' placeholder='Address of the recipient of the gift'>
+                        <br>
+                        <button id='buttontogiftcontent' type='button' class='btn btn-primary'>Gift Content</button>
+                    </div>
+                    <br>
 
-
-            <div id='actionspanelstatistic' class="panel panel-primary">
-                <div class='panel-heading'>Statistics</div>
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Number of View</div>
-                    <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-primary'>Get number of view for each content</button>
-                </div>
-                <br>
-                <div class='panel panel-default'>
-                    <div class='panel-heading'>Content List</div>
-                    <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-primary'>Get the list of content</button>
+                    <div class='panel panel-default'>
+                        <div class='panel-heading'>Gift a Premium Account</div>
+                        <label>Name of the recipient of the gift:</label>
+                        <input type='text' class='form-control' id='namerecipientaddress' placeholder='Name of the recipient of the gift'>
+                        <br>
+                        <button id='buttontogiftpremium' type='button' class='btn btn-primary'>Gift Premium</button>
+                    </div>
                     <br>
                 </div>
             </div>
         </div>
+        <div id='actionspanelartist' class='panel panel-primary'>
+            <div class='panel-heading'>Actions as Artist</div>
+            <div id='publishpanel' class='panel panel-default'>
+                <div class='panel-heading'>Publish a Content</div>
+                <label>Name of the content:</label>
+                <input type='text' class='form-control mr-sm-2' id='namecontenttopublish' placeholder='Name of the content'>
+                <label>Genre of the content:</label>
+                <input type='text' class='form-control' id='genrecontent' placeholder='Genre of the content'>
+                <label>Your name as Artist:</label>
+                <input type='text' class='form-control' id='artistname' placeholder='Your name as Artist'>
+                <label>Price of the content in Ether:</label>
+                <select class="form-control" id="pricecontent">
+                    <option>0.01</option>
+                    <option>0.02</option>
+                    <option>0.05</option>
+                    <option>0.1</option>
+                    <option>0.15</option>
+                    <option>0.2</option>
+                    <option>0.25</option>
+                    <option>0.3</option>
+                    <option>0.35</option>
+                    <option>0.4</option>
+                    <option>0.45</option>
+                    <option>0.5</option>
+                </select>
+                <form id="wichcontract">
+                    <label class="radio-inline">
+                        <input type="radio" name="optradio" checked="checked"> &nbsp &nbsp &nbsp &nbsp Deafualt Contract</label>
+                    <label class="radio-inline">
+                        <input type="radio" name="optradio"> &nbsp &nbsp &nbsp &nbsp Custom Contract</label>
+                </form>
+                <br>
+                <button id='buttontopublishcontent' class='btn btn-primary'>Publish content</button>
+                <br>
+            </div>
+        </div>
+
+        <div id='actionspanelstatistic' class="panel panel-primary">
+            <div class='panel-heading'>Statistics</div>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Number of View</div>
+                <br>
+                <button id='buttontogetstatisticsviws' type='button' class='btn btn-primary'>Get number of view for each content</button>
+            </div>
+            <br>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Content List</div>
+                <br>
+                <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-primary'>Get the list of content</button>
+                <br>
+            </div>
+        </div>
+    </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
