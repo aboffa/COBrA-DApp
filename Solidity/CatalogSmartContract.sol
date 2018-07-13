@@ -77,7 +77,7 @@ contract CatalogSmartContract {
         require(cm != address(0), "This content doesn't exist!");
     
     }
-    function GiftPremium(address a)  payable public{
+    function GiftPremium(address a)  payable public {
         require(msg.value >= WeiForPremium);
         premiumCustomers[a] = block.number + BlockForPremium;
     }

@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
 $("#actionspanelstatistic").hide();
@@ -8,8 +9,8 @@ var CatalogSmartContract;
 
 web3.eth.getAccounts()
     .then(function (data) {
-        console.log(data)
-        web3.eth.defaultAccount = data[8];
+        console.log(data);
+        web3.eth.defaultAccount = data[9];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -42,14 +43,10 @@ function setUpUI(isPremium) {
     //Button action for Artist Panel
     $("#buttontopublishcontent").click(function () {
         //parse input
-        let name = $("#namecontenttopublish").val();
-        let namebyte = web3.utils.asciiToHex(name);
-        let genre = $("#genrecontent").val();
-        let genrebytes = web3.utils.asciiToHex(genre);
-        let price = $("#pricecontent").val();
-        let priceint = Number(web3.utils.toWei(price, 'ether'));
-        let artistname = $("#artistname").val();
-        let artistnamebyte = web3.utils.asciiToHex(artistname);
+        let namebyte = web3.utils.asciiToHex($("#namecontenttopublish").val());
+        let genrebytes = web3.utils.asciiToHex($("#genrecontent").val());
+        let priceint = Number(web3.utils.toWei($("#pricecontent").val(), 'ether'));
+        let artistnamebyte = web3.utils.asciiToHex($("#artistname").val());
         //console.log(name, genre, data, price, artistname);
         //getting the compiled contract
         //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
@@ -67,7 +64,7 @@ function setUpUI(isPremium) {
                         return myContract
                             .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
                             // no 15*, check effective gas usage
-                            .send({ value: 0, gas: 1500000, gasPrice: '100000000000' })
+                            .send({ value: 0, gas: 1500000, gasPrice: '100000000000' });
                     })
                     .then(function (newContractInstance) {
                         console.log(newContractInstance);
@@ -77,7 +74,7 @@ function setUpUI(isPremium) {
                     .then(function () {
                         console.log("Ok");
                     })
-                    .catch(err => console.log(err));
+                    .catch(err => console.log(err));//better error
             })
     });
     // Buttons for gifts 
@@ -85,26 +82,58 @@ function setUpUI(isPremium) {
         let namebytes = web3.utils.asciiToHex($("#namecontentgift").val());
         let address = $("#namerecipient").val();
         if (web3.utils.isAddress(address)) {
-            CatalogSmartContract.methods.GiftContent(namebytes, address)
-                .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
-                .then(function (result) {
-                    //event to let the recipient know
+            CatalogSmartContract.methods.isPremium(address)
+                .call()
+                .then(function (isPremium) {
+                    if (!isPremium) {
+                        CatalogSmartContract.methods.getPriceContent(namebytes)
+                            .call()
+                            .then(function (price) {
+                                if (window.confirm("You are gifting a content to " + address + ". Buying this content costs " + web3.utils.fromWei(price, 'ether') + " ether. Do you agree?")) {
+                                    CatalogSmartContract.methods.GiftContent(namebytes, address)
+                                        .send({ value: price, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                                        .then(function (result) {
+                                            //event to let the recipient know
+                                            console.log(result);
+                                        });
+                                }
+                            });
+                    }
+                    else {
+                        displayErrorInForm("namerecipient", "Customer " + address + " is premium. He already has access to all content.");
+                    }
                 })
+                .catch(err => console.log(err));
+
         } else {
-            $("#namerecipient").attr("class", "form-control is-invalid");
-            $("#namerecipient").after("<div class='invalid-feedback'>Invalid Address</div>")
+            displayErrorInForm("namerecipient", "Invalid Address.");
         }
-    })
+    });
     $("#buttontogiftpremium").click(function () {
         let address = $("#namerecipientaddress").val();
         if (web3.utils.isAddress(address)) {
-            CatalogSmartContract.methods.GiftPremium(address)
-                .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
-                .then(function (result) {
-                    //event to let the recipient know
+            CatalogSmartContract.methods.isPremium(address)
+                .call()
+                .then(function (isPremium) {
+                    if (!isPremium) {
+                        if (window.confirm("You are gifting a premium account to " + address + ". Buying premium costs 1 ether. Do you agree?")) {
+                            CatalogSmartContract.methods.GiftPremium(address)
+                                .send({ value: web3.utils.toWei("1", "ether"), gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                                .then(function (result) {
+                                    //event to let the recipient know
+                                    console.log(result);
+                                });
+                        }
+                    }
+                    else {
+                        displayErrorInForm("namerecipientaddress", "Customer " + address + " is premium. He already has access to all content.");
+                    }
                 })
+                .catch(err => console.log(err));
+        } else {
+            displayErrorInForm("namerecipientaddress", "Invalid Address.");
         }
-    })
+    });
     // Buttons action for Statistic panel
     $("#buttontogetstatisticsviws").click(function () {
         var contentList;
@@ -115,7 +144,7 @@ function setUpUI(isPremium) {
             })
             .then(function () {
                 return CatalogSmartContract.methods.GetStatistics()
-                    .call()
+                    .call();
             }).then(function (result) {
                 var totalstring = "";
                 for (var i = 0; i < contentList.length; i++) {
@@ -126,19 +155,24 @@ function setUpUI(isPremium) {
                 alert("Result : \n " + totalstring);
             })
             .catch(err => console.log(err));
-    })
+    });
     $("#buttontogetstatisticscontentlist").click(function () {
         CatalogSmartContract.methods.GetContentList()
             .call()
             .then(function (result) {
-                console.log(result);
+                var totalstring = "";
+                for (var i = 0; i < result.length; i++) {
+                    let namestring = web3.utils.hexToAscii(result[i]);
+                    totalstring += (namestring + "\n");
+                }
+                alert("Result : \n " + totalstring);
             })
             .catch(err => console.log(err));
-    })
+    });
     if (isPremium) {
         //Button action for Premium customer
         console.log("Setting up premium ui");
-        $("#loginpanel").append("<div class='card-body text-success'> <h5 class='card-title'>Logged as Premium Account</h5> </div> ");
+        $("#loginpanel").append("<div class='card-body text-success'> <div class='card-header' style='background-color:#C8E6C9'> <h5 class='card-title'>Logged as Premium Account</h5> </div> </div> ");
         $("#buttontogetaccesscontent").click(function () {
             let namecontent = $("#namecontent").val();
             let namecontentbytes = web3.utils.asciiToHex(namecontent);
@@ -148,7 +182,10 @@ function setUpUI(isPremium) {
                     console.log("obtained access");
                     console.log(result);
                 })
-                .catch(err => console.log(err));
+                .catch(function (err) {
+                    console.log(err);
+                    displayErrorInForm("namecontent", "Error, are you sure this content exists?");
+                });
         });
 
         $("#buttontogetcontent").click(function () {
@@ -164,23 +201,27 @@ function setUpUI(isPremium) {
                 .then(function (transaction) {
                     console.log("obtained content");
                 })
-                .catch(err => console.log(err));
-        })
+                .catch(function (err) {
+                    console.log("%o", err);
+                });
+        });
     }
     else {
         //Button action for Standard customer
         console.log("Setting up standard ui");
-        $("#loginpanel").append("<div class='card-body text-success'> <h5 class='card-title'>Logged as Standard Account</h5> </div> <div class='card-body'> <button id='buttonforpremium' type='button' class='btn btn-success'>Get Premium Account (1 ETH) </button> <\div>");
+        $("#loginpanel").append("<div id='cardbobystandard' class='card-body text-success'> <div class='card-header' style='background-color:#C8E6C9'> <h5 class='card-title'>Logged as Standard Account</h5> </div> </div> <div class='card-body'> <button id='buttonforpremium' type='button' class='btn btn-outline-success'>Get Premium Account (1 ETH) </button> <\div>");
         $("#buttonforpremium").click(function () {
             if (window.confirm("Buying premium costs 1 ether. Do you agree?")) {
                 CatalogSmartContract.methods.BuyPremium().send({ from: web3.eth.defaultAccount, value: web3.utils.toWei("1", "ether") })
                     .then(function (transaction) {
-                        //modals
                         alert("Payed 1 Ether! Transaction hash = " + transaction.transactionHash);
-                        console.log(transaction)
+                        console.log(transaction);
                         location.reload();
                     })
-                    .catch(err => console.log(err));
+                    .catch(function (err) {
+                        console.log(err);
+                        $("#loginpanel").append("<div style='color: #ff0000' >Error, are you sure you have the rigth ammount of Ether?</div>");
+                    });
             }
         });
 
@@ -198,9 +239,12 @@ function setUpUI(isPremium) {
                                 console.log("obtained access");
                                 alert("Payed " + web3.utils.fromWei(price, 'ether') + " Ether! Transaction hash = " + transaction.transactionHash);
                             })
-                            .catch(err => console.log(err));
+                            .catch(function (err) {
+                                console.log(err);
+                                displayErrorInForm("namecontent", "Error, are you sure this content exists or you have the rigth ammount of Ether?");
+                            });
                     }
-                })
+                });
         });
 
         $("#buttontogetcontent").click(function () {
@@ -245,7 +289,11 @@ if (!error)
 */
     CatalogSmartContract.events.ContenAccessObtained({ fromBlock: 0 },
         function (error, event) {
-            console.log(event);
+            if (!error) {
+                console.log(event);
+            }else{
+                console.log(error);
+            }
         })
         .on('data', function (event) {
             console.log(event); // same results as the optional callback above
@@ -272,4 +320,12 @@ if (!error)
                 console.log("New content published" + result);
             }
         });*/
+}
+
+function displayErrorInForm(idElement, stringToAdd) {
+    if ($("#" + idElement).next().is(".invalid-feedback")) {
+        $("#" + idElement).next().remove();
+    }
+    $("#" + idElement).attr("class", "form-control is-invalid");
+    $("#" + idElement).after("<div class='invalid-feedback'>" + stringToAdd + "</div>");
 }
