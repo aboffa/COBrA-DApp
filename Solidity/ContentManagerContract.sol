@@ -8,18 +8,28 @@ contract ContentManagementContract{
     address public authorAddress;
     bytes32 public authorName;
     address public catalog;
-    uint blockGenerated;
+    uint public blockGenerated;
     uint public price;
     uint public views;
+    uint public feedBack1=0;
+    uint public feedBack2=0;
+    uint public feedBack3=0;
+    //calculate bytes3
+    uint public numfeedback=0;
+    struct StandardRight{
+        bool isAuthorized;
+        bool canLeaveAFeedBack;
+    }
     
     struct PremiumRight{
         bool isAuthorized;
         uint lastblockvalid;
+        bool canLeaveAFeedBack;
     }
     mapping (address => PremiumRight) public AuthorizedPremiumCustomers;
-    mapping (address => bool) public AuthorizedStandardCustomers;
+    mapping (address => StandardRight) public AuthorizedStandardCustomers;
     
-    event canLeaveAFeedBack(string s);
+    event notifyFeedBackAvailable(address who, bytes32 name_);
 
     constructor (bytes32 name_, bytes32 genre_, uint price_,bytes32 authorName_, address catalog_) public {
         catalog = catalog_;
@@ -40,15 +50,15 @@ contract ContentManagementContract{
         _;
     }
     
-    modifier onlyAuthorizedStandard() {
+    modifier onlyAuthorizedStandard {
         require(
-            AuthorizedStandardCustomers[msg.sender],
+            AuthorizedStandardCustomers[msg.sender].isAuthorized,
             "Only customer that payed can access to this Content."
         );
         _;
     }
     
-    modifier onlyAuthorizedPremium() {
+    modifier onlyAuthorizedPremium{
         require(
             (AuthorizedPremiumCustomers[msg.sender].isAuthorized && AuthorizedPremiumCustomers[msg.sender].lastblockvalid > block.number),
             "Your premium account is expired."
@@ -56,24 +66,56 @@ contract ContentManagementContract{
         _;
     }
     
+    modifier authorizedLeaveAFeedBackStandard() {
+        require(
+            AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack == true
+        );
+        _;
+    }
+    
+    modifier authorizedLeaveAFeedBackPremium() {
+        require(
+            AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack == true
+        );
+        _;
+    }
+    
     function setEnabledStandard(address addr) public onlyCatalog() {
-        AuthorizedStandardCustomers[addr] = true;
+        AuthorizedStandardCustomers[addr] = StandardRight(true,false);
     }
     
     function setEnabledPremium(address addr, uint lastblockvalid_) public onlyCatalog {
-        AuthorizedPremiumCustomers[addr] = PremiumRight(true, lastblockvalid_);
+        AuthorizedPremiumCustomers[addr] = PremiumRight(true, lastblockvalid_,false);
     }
     
     function retriveContentStandard() public onlyAuthorizedStandard {
         views++;
-        AuthorizedStandardCustomers[msg.sender] = false;
-        emit canLeaveAFeedBack("You can leave a feedback");
+        AuthorizedStandardCustomers[msg.sender].isAuthorized = false;
+        AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack = true;
+        emit notifyFeedBackAvailable(msg.sender, name);
         
     }
     
     function retriveContentPremium() public onlyAuthorizedPremium {
         AuthorizedPremiumCustomers[msg.sender].isAuthorized = false;
-        emit canLeaveAFeedBack("You can leave a feedback");
+        AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack = true;
+        emit notifyFeedBackAvailable(msg.sender, name);
+    }
+    
+    function LeaveFeedBackStandard(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackStandard{
+        feedBack1+=feedBack1_;
+        feedBack2+=feedBack2_;
+        feedBack3+=feedBack3_;
+        numfeedback++;
+        AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack = false;
+    }
+    
+    function LeaveFeedBackPremium(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackPremium{
+        feedBack1+=feedBack1_;
+        feedBack2+=feedBack2_;
+        feedBack3+=feedBack3_;
+        numfeedback++;
+        AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack = false;
     }
     
     function close() public onlyCatalog {

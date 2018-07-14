@@ -2,11 +2,10 @@
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
 $("#actionspanelstatistic").hide();
-var web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+var web3 = new Web3(Web3.givenProvider || new Web3.providers.WebsocketProvider('ws://127.0.0.1:8545'));
 console.log(web3);
 
 var CatalogSmartContract;
-
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
@@ -28,6 +27,7 @@ web3.eth.getAccounts()
         $("#actionspanelcustomer").show();
         $("#actionspanelartist").show();
         $("#actionspanelstatistic").show();
+        $("#loginpanel").css('background-color','#C8E6C9');
         setUpEvents();
         setUpUI(isPremium);
 
@@ -43,39 +43,53 @@ function setUpUI(isPremium) {
     //Button action for Artist Panel
     $("#buttontopublishcontent").click(function () {
         //parse input
-        let namebyte = web3.utils.asciiToHex($("#namecontenttopublish").val());
-        let genrebytes = web3.utils.asciiToHex($("#genrecontent").val());
-        let priceint = Number(web3.utils.toWei($("#pricecontent").val(), 'ether'));
-        let artistnamebyte = web3.utils.asciiToHex($("#artistname").val());
-        //console.log(name, genre, data, price, artistname);
-        //getting the compiled contract
-        //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
-        $.getJSON("./misc/contentContract.json",
-            function (data) {
-                console.log(data);
-                let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
-                let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
-                console.log("Deploying the contract");
-                let bytecode = data.contracts["ContentManagerContract.sol:ContentManagementContract"].bytecode;
-                web3.eth.estimateGas({ data: bytecode })
-                    .then(function (gasEstimate) {
-                        console.log(gasEstimate);
-                        let myContract = new web3.eth.Contract(abi, { gas: 30000000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
-                        return myContract
-                            .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
-                            // no 15*, check effective gas usage
-                            .send({ value: 0, gas: 1500000, gasPrice: '100000000000' });
-                    })
-                    .then(function (newContractInstance) {
-                        console.log(newContractInstance);
-                        return CatalogSmartContract.methods.NewContent(newContractInstance.options.address, genrebytes, artistnamebyte, namebyte)
-                            .send({ from: web3.eth.defaultAccount });
-                    })
-                    .then(function () {
-                        console.log("Ok");
-                    })
-                    .catch(err => console.log(err));//better error
-            })
+        let name = $("#namecontenttopublish").val();
+        let genre = $("#genrecontent").val();
+        let artist = $("#artistname").val();
+        if (name == "" || genre == "" || artist == "") {
+            displayErrorAfterButton("publishpanel", "Please insert name, genre and your artist name");
+        }
+        else {
+
+            let namebyte = web3.utils.asciiToHex(name);
+            let genrebytes = web3.utils.asciiToHex(genre);
+            let priceint = Number(web3.utils.toWei($("#pricecontent").val(), 'ether'));
+            let artistnamebyte = web3.utils.asciiToHex(artist);
+            //console.log(name, genre, data, price, artistname);
+            //getting the compiled contract
+            //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
+            $.getJSON("./misc/contentContract.json",
+                function (data) {
+                    console.log(data);
+                    let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
+                    let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
+                    console.log("Deploying the contract");
+                    let bytecode = data.contracts["ContentManagerContract.sol:ContentManagementContract"].bytecode;
+                    web3.eth.estimateGas({ data: bytecode })
+                        .then(function (gasEstimate) {
+                            console.log(gasEstimate);
+                            let myContract = new web3.eth.Contract(abi, { gas: 30000000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
+                            return myContract
+                                .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
+                                // no 15*, check effective gas usage
+                                .send({ value: 0, gas: 1500000, gasPrice: '100000000000' });
+                        })
+                        .then(function (newContractInstance) {
+                            console.log(newContractInstance);
+                            return CatalogSmartContract.methods.NewContent(newContractInstance.options.address, genrebytes, artistnamebyte)
+                                .send({ from: web3.eth.defaultAccount });
+                        })
+                        .then(function () {
+                            console.log("Ok");
+                            alert("Content " + name + " published!");
+                            $("#namecontenttopublish").val("");
+                            $("#genrecontent").val("");
+                            $("#artistname").val("");
+                            $("#pricecontent").val("0.01");
+                        })
+                        .catch(err => console.log(err));//better error
+                })
+        }
     });
     // Buttons for gifts 
     $("#buttontogiftcontent").click(function () {
@@ -93,7 +107,7 @@ function setUpUI(isPremium) {
                                     CatalogSmartContract.methods.GiftContent(namebytes, address)
                                         .send({ value: price, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                                         .then(function (result) {
-                                            //event to let the recipient know
+                                            alert("Gifted!");
                                             console.log(result);
                                         });
                                 }
@@ -120,7 +134,7 @@ function setUpUI(isPremium) {
                             CatalogSmartContract.methods.GiftPremium(address)
                                 .send({ value: web3.utils.toWei("1", "ether"), gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                                 .then(function (result) {
-                                    //event to let the recipient know
+                                    alert("Gifted!");
                                     console.log(result);
                                 });
                         }
@@ -152,7 +166,7 @@ function setUpUI(isPremium) {
                     console.log(namestring + "  views = " + result[i]);
                     totalstring += (namestring + "  views = " + result[i] + "\n");
                 }
-                alert("Result : \n " + totalstring);
+                alert("Result : \n" + totalstring);
             })
             .catch(err => console.log(err));
     });
@@ -165,22 +179,58 @@ function setUpUI(isPremium) {
                     let namestring = web3.utils.hexToAscii(result[i]);
                     totalstring += (namestring + "\n");
                 }
-                alert("Result : \n " + totalstring);
+                alert("Result : \n" + totalstring);
             })
             .catch(err => console.log(err));
     });
+
+    $("#buttontonotify").click(function () {
+        let name = $("#nameauthornotify").val();
+        let genre_ = $("#namegenrenotify").val();
+        if (name == "" && genre_ == "") {
+            displayErrorAfterButton("notifypanel", "Please insert a name of Author o a Genre");
+        }
+        else {
+            if (name != "") {
+                alert("Subscribed to content published by " + name);
+                CatalogSmartContract.events.NewContentEvent(//{
+                    //filter: { autor: nameauthor } , <- doesn't work so I did it manually
+                    //}
+                )
+                    .on('data', function (event) {
+                        if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(name) == 0) {
+                            alert("New content published from " + name);
+                            console.log(event);
+                        }
+                    })
+                    .on('error', console.error);
+            }
+            if (genre_ != "") {
+                alert("Subscribed to content of genre " + genre_);
+                CatalogSmartContract.events.NewContentEvent()
+                    .on('data', function (event) {
+                        if (web3.utils.hexToAscii(event.returnValues.genre).localeCompare(genre_) == 0) {
+                            alert("New content published of genre " + genre_);
+                            console.log(event);
+                        }
+                    })
+                    .on('error', console.error);
+            }
+        }
+    });
+
     if (isPremium) {
         //Button action for Premium customer
         console.log("Setting up premium ui");
-        $("#loginpanel").append("<div class='card-body text-success'> <div class='card-header' style='background-color:#C8E6C9'> <h5 class='card-title'>Logged as Premium Account</h5> </div> </div> ");
+        $("#loginpanel").append("<div class='card-body text-success'> <div class='card-header'> <h5 class='card-title'>Logged as Premium Account</h5> </div> </div> ");
         $("#buttontogetaccesscontent").click(function () {
             let namecontent = $("#namecontent").val();
             let namecontentbytes = web3.utils.asciiToHex(namecontent);
             CatalogSmartContract.methods.GetContentPremium(namecontentbytes)
                 .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                 .then(function (result) {
-                    console.log("obtained access");
                     console.log(result);
+                    alert("Now you can concume content : " + namecontent);
                 })
                 .catch(function (err) {
                     console.log(err);
@@ -189,7 +239,8 @@ function setUpUI(isPremium) {
         });
 
         $("#buttontogetcontent").click(function () {
-            let namebytes = web3.utils.asciiToHex($("#namecontentconsume").val());
+            let namecontent = $("#namecontentconsume").val();
+            let namebytes = web3.utils.asciiToHex(namecontent);
             CatalogSmartContract.methods.getAddressContent(namebytes)
                 .call()
                 .then(function (address) {
@@ -199,10 +250,11 @@ function setUpUI(isPremium) {
                         .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                 })
                 .then(function (transaction) {
+                    alert(namecontent + " consumed.");
                     console.log("obtained content");
                 })
                 .catch(function (err) {
-                    console.log("%o", err);
+                    console.log(err);
                 });
         });
     }
@@ -248,7 +300,8 @@ function setUpUI(isPremium) {
         });
 
         $("#buttontogetcontent").click(function () {
-            let namebytes = web3.utils.asciiToHex($("#namecontentconsume").val());
+            let name = $("#namecontentconsume").val()
+            let namebytes = web3.utils.asciiToHex(name);
             CatalogSmartContract.methods.getAddressContent(namebytes)
                 .call()
                 .then(function (address) {
@@ -256,18 +309,32 @@ function setUpUI(isPremium) {
                     console.log(ContentManagementContract);
                     console.log("address of the content : ");
                     console.log(address);
+                    alert(name + " consumed.");
+                    alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
+                    setUIFeedBackForm(address,name);
                     return ContentManagementContract.methods.retriveContentStandard()
                         .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                 })
                 .then(function (transaction) {
                     console.log("obtained content");
                 })
-                .catch(err => console.log(err));
+                .catch(function (err) {
+                    console.log(err);
+                    displayErrorInForm("namecontentconsume", "Error, are you sure you have rigth to access this content?");
+                });
         })
     }
 }
 
 function setUpEvents() {
+    /*
+    Event List 
+    event ContentAccessObtainedStandard(bytes32 name, address addr);
+    event ContentAccessObtainedPremium(bytes32 name, address addr);
+    event ContentAccessGifted(address from, bytes32 name, address to);
+    event PremiumGifted(address from, address to);
+    event NewContentEvent( bytes32 genre, bytes32 autor);
+    */
     //Setting up events
 
     /*
@@ -277,55 +344,41 @@ function setUpEvents() {
             })
                 .then(function (events) {
                     console.log(events) // same results as the optional callback above
-                });
- 
- 
- 
-var subscription = web3.eth.subscribe('NewContentEvent',
-function (error, result) {
-if (!error)
-    console.log(result);
-});
-*/
-    CatalogSmartContract.events.ContenAccessObtained({ fromBlock: 0 },
-        function (error, event) {
-            if (!error) {
-                console.log(event);
-            }else{
-                console.log(error);
-            }
-        })
+                });*/
+
+    CatalogSmartContract.events.ContentAccessGifted()
         .on('data', function (event) {
-            console.log(event); // same results as the optional callback above
-        })
-        .on('changed', function (event) {
-            // remove event from local database
-            console.log(event);
+            if (data.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
+                alert(data.returnValues.from + " gifted you content: " + data.returnValues.name + "!");
+            }
         })
         .on('error', console.error);
-    CatalogSmartContract.events.NewContentEvent({ fromBlock: 0 },
-        function (error, result) {
-            if (!error) {
-                //$("#loginpanel").append("<div class="alert alert-info"><strong>Info!</strong> New content obtained. </div>");
-                alert("New content published" + result);
-                console.log("New content published" + result);
-            }
-        });
 
-    /*CatalogSmartContract.events.canLeaveAFeedBack(
-        function (error, result) {
-            if (!error) {
-                //$("#loginpanel").append("<div class="alert alert-info"><strong>Info!</strong> New content obtained. </div>");
-                alert("New content published" + result);
-                console.log("New content published" + result);
+    CatalogSmartContract.events.PremiumGifted()
+        .on('data', function (event) {
+            if (event.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
+                alert(event.returnValues.from + " gifted you a Premium account!");
+                location.reload();
             }
-        });*/
+        })
+        .on('error', console.error);
+
 }
 
+function setUIFeedBackForm(addres,name){
+    $("#contentselect").append("<option>"+name+"</option>");
+}
 function displayErrorInForm(idElement, stringToAdd) {
     if ($("#" + idElement).next().is(".invalid-feedback")) {
         $("#" + idElement).next().remove();
     }
     $("#" + idElement).attr("class", "form-control is-invalid");
     $("#" + idElement).after("<div class='invalid-feedback'>" + stringToAdd + "</div>");
+}
+
+function displayErrorAfterButton(idElement, stringToAdd) {
+    if ($("#" + idElement).children().last().attr("class") == undefined) {
+        $("#" + idElement).children().last().remove();
+    }
+    $("#" + idElement).append("<div style='color: #ff0000' >" + stringToAdd + "</div> ");
 }

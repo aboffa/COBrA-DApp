@@ -52,7 +52,7 @@
 
                     <br>
                     <div class='card bg-light mb-3'>
-                        
+
                         <div class='card-header' style="background-color:#64B5F6">Consume content</div>
                         <br>
                         <label>Name of the content:</label>
@@ -75,7 +75,6 @@
                         </div>
                     </div>
                     <br>
-
                     <div class='card bg-light mb-3'>
                         <div class='card-header' style="background-color:#64B5F6">Gift a Premium Account</div>
                         <div class="card-body">
@@ -86,6 +85,44 @@
                         </div>
                     </div>
                     <br>
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header' style="background-color:#64B5F6">Notify me</div>
+                        <div class="card-body" id="notifypanel">
+                            <label>Genre of which you want to be updated:</label>
+                            <input type='text' class='form-control' id='namegenrenotify' placeholder='Genre Name'>
+                            <br>
+                            <label>AND/OR</label>
+                            <br>
+                            <br>
+                            <label>Artist of which you want to be updated:</label>
+                            <input type='text' class='form-control' id='nameauthornotify' placeholder='Artist Name'>
+                            <br>
+                            <button id='buttontonotify' type='button' class='btn btn-raised btn-info'>Notify me</button>
+                        </div>
+                    </div>
+
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header' style="background-color:#64B5F6">Leave a FeedBack</div>
+                        <div class="card-body" id="feedbackpanel">
+                                <div class="form-group">
+                                        <label>Select wich content you want to feedback:</label>
+                                        <select class="form-control" id="contentselect">
+                                          <option>Select... </option>
+                                        </select>
+                                      </div>
+                            <label>Appreciation of the content (1 low, 5 high)</label><br><br>
+                            1  <input type="range" min="1" max="5" >  5
+                            <br><br>
+                            <label>Price fairness (1 low, 5 high)</label><br><br>
+                            1  <input type="range" min="1" max="5" >  5
+                            <br><br>
+                            <label>Originality of the content (1 low, 5 high)</label><br><br>
+                            1  <input type="range" min="1" max="5" >  5
+                            <br><br>
+                            <button id='buttontofeedback' type='button' class='btn btn-raised btn-info'>Send FeedBack</button>
+
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id='actionspanelartist' class='card bg-light mb-3'>
@@ -134,7 +171,6 @@
                             <br>
                             <br>
                             <button id='buttontopublishcontent' class='btn btn-raised btn-info'>Publish content</button>
-
                         </div>
                     </div>
                 </div>

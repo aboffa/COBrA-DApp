@@ -9,11 +9,11 @@ contract CatalogSmartContract {
     address owner;
     mapping (address => uint) public premiumCustomers;
     address[] public contentManagers;
-    //maybe not necessary remember view method dont spend gas
-    mapping (bytes32 => address) public fromNametoContent;
     
-    event ContenAccessObtained(string s, address addr);
-    event ContenAccessGifted(string s, address addr);
+    event ContentAccessObtainedStandard(bytes32 name, address addr);
+    event ContentAccessObtainedPremium(bytes32 name, address addr);
+    event ContentAccessGifted(address from, bytes32 name, address to);
+    event PremiumGifted(address from, address to);
     event NewContentEvent( bytes32 genre, bytes32 autor);
     
     modifier onlyOwner {
@@ -41,63 +41,68 @@ contract CatalogSmartContract {
         premiumCustomers[msg.sender] = block.number + BlockForPremium;
     }
     
-    function NewContent(address cmc, bytes32 genre_, bytes32 authorName_, bytes32 name_ ) public {
+    function NewContent(address cmc, bytes32 genre_, bytes32 authorName_) public {
         contentManagers.push(cmc);
-        fromNametoContent[name_] = cmc;
         emit NewContentEvent(genre_, authorName_);
     }
     
     function GetContent(bytes32 name_) payable public returns (address cm) {
-        cm = fromNametoContent[name_];
-        require(cm != address(0), "This content doesn't exist!");
+        cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price, "You have to pay the right amount!" );
         cmccasted.setEnabledStandard(msg.sender);
-        emit ContenAccessObtained("contenuto ottenuto", cm);
+        emit ContentAccessObtainedStandard(name_, cm);
     }
     
     function GetContentPremium(bytes32 name_) public isStillPremium {
-        address cm = fromNametoContent[name_];
-        require(cm != address(0), "This content doesn't exist!");
+        address cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         cmccasted.setEnabledPremium(msg.sender, premiumCustomers[msg.sender]);
-        emit ContenAccessObtained("contenuto ottenuto", cm);
+        emit ContentAccessObtainedPremium(name_, cm);
     }
     
     function getPriceContent(bytes32 name_) view public returns (uint price) {
-        address cm = fromNametoContent[name_];
-        require(cm != address(0), "This content doesn't exist!");
+        address cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         price = cmccasted.price();
     }
     
     function getAddressContent(bytes32 name_) view public returns (address cm){
-        cm = fromNametoContent[name_];
-        require(cm != address(0), "This content doesn't exist!");
+        cm = fromNametoContent(name_);
     
     }
     function GiftPremium(address a)  payable public {
         require(msg.value >= WeiForPremium);
         premiumCustomers[a] = block.number + BlockForPremium;
+        emit PremiumGifted(msg.sender, a);
     }
     
     function GiftContent(bytes32 name_, address a)  payable public {
-        address cm = fromNametoContent[name_];
-        require(cm != address(0), "This content doesn't exist!");
+        address cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
-        require(msg.value >= price,  "You have to pay the right amount!" );
+        require(msg.value >= price,  "You have to pay the right amount!");
         cmccasted.setEnabledStandard(a);
-        emit ContenAccessGifted("contenuto ottenuto", cm);
+        emit ContentAccessGifted(msg.sender, name_, a);
     }
     
     function isPremium(address a)  public view returns (bool ok) {
         ok = (premiumCustomers[a] > block.number);
     }
 
+    function fromNametoContent(bytes32 name_) view private returns (address a){
+        a=address(0);
+        for (uint i = 0; i< contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            if(cmccasted.name() == name_){
+                a=contentManagers[i];
+                break;
+            }
+        }
+        require(a!=address(0));
+    }
     //Statistics
-    
     function GetStatistics() public view returns (uint[] viewsarray ){
         viewsarray = new uint[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
@@ -132,20 +137,20 @@ contract CatalogSmartContract {
     function GetMostPopularByAuthor(bytes32 author) public view returns (bytes32[] result ){
         
     }
+    
+    function GetMostRathed(uint8 feedbackCategory) public view returns (bytes32[] result ){
+        
+    }
+    
+    function GetMostRathedByGenre(bytes32 genre, uint8 feedbackCategory) public view returns (bytes32[] result ){
+        
+    }
+    
+    function GetMostRathedByAuthor(bytes32 author, uint8 feedbackCategory) public view returns (bytes32[] result ){
+        
+    }
     */
     function close() public onlyOwner {
         selfdestruct(owner);
     }
-    
-        /*
-    function() public payable{
-        
-        if (msg.value == WeiForPremium ){
-            premiumCustomer.push(msg.sender);
-        }
-        else{
-            standardCustomer.push(msg.sender);
-        }
-    }*/
-    
 }
