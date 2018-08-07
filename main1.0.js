@@ -9,7 +9,7 @@ var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[9];
+        web3.eth.defaultAccount = data[5];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -27,7 +27,7 @@ web3.eth.getAccounts()
         $("#actionspanelcustomer").show();
         $("#actionspanelartist").show();
         $("#actionspanelstatistic").show();
-        $("#loginpanel").css('background-color','#C8E6C9');
+        $("#loginpanel").css('background-color', '#C8E6C9');
         setUpEvents();
         setUpUI(isPremium);
 
@@ -230,7 +230,7 @@ function setUpUI(isPremium) {
                 .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                 .then(function (result) {
                     console.log(result);
-                    alert("Now you can concume content : " + namecontent);
+                    alert("Now you can consume content : " + namecontent);
                 })
                 .catch(function (err) {
                     console.log(err);
@@ -310,8 +310,8 @@ function setUpUI(isPremium) {
                     console.log("address of the content : ");
                     console.log(address);
                     alert(name + " consumed.");
+                    //maybe event
                     alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
-                    setUIFeedBackForm(address,name);
                     return ContentManagementContract.methods.retriveContentStandard()
                         .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
                 })
@@ -322,6 +322,35 @@ function setUpUI(isPremium) {
                     console.log(err);
                     displayErrorInForm("namecontentconsume", "Error, are you sure you have rigth to access this content?");
                 });
+        })
+
+        $("#buttontofeedback").click(function () {
+            let content = $("#namefeedback").val();
+            if (content == "") {
+                displayErrorAfterButton("feedbackpanel", "Please select wich content you want to feedback");
+            }
+            else {
+                let f1 = $("#feddback1").val();
+                let f2 = $("#feddback2").val();
+                let f3 = $("#feddback3").val();
+                console.log(f1, f2, f3);
+                let contentbytes = web3.utils.asciiToHex(content);
+                CatalogSmartContract.methods.getAddressContent(contentbytes)
+                    .call()
+                    .then(function (address) {
+                        let ContentManagementContract = new web3.eth.Contract(abiContent, address);
+                        return ContentManagementContract.methods.LeaveFeedBackStandard(f1, f2, f3)
+                            .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
+                    })
+                    .then(function (transaction) {
+                        console.log(transaction);
+                    })
+                    .catch(function (err) {
+                        console.log(err);
+                    })
+
+
+            }
         })
     }
 }
@@ -365,9 +394,6 @@ function setUpEvents() {
 
 }
 
-function setUIFeedBackForm(addres,name){
-    $("#contentselect").append("<option>"+name+"</option>");
-}
 function displayErrorInForm(idElement, stringToAdd) {
     if ($("#" + idElement).next().is(".invalid-feedback")) {
         $("#" + idElement).next().remove();

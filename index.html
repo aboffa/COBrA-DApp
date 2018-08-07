@@ -104,21 +104,29 @@
                     <div class='card bg-light mb-3'>
                         <div class='card-header' style="background-color:#64B5F6">Leave a FeedBack</div>
                         <div class="card-body" id="feedbackpanel">
-                                <div class="form-group">
-                                        <label>Select wich content you want to feedback:</label>
-                                        <select class="form-control" id="contentselect">
-                                          <option>Select... </option>
-                                        </select>
-                                      </div>
-                            <label>Appreciation of the content (1 low, 5 high)</label><br><br>
-                            1  <input type="range" min="1" max="5" >  5
-                            <br><br>
-                            <label>Price fairness (1 low, 5 high)</label><br><br>
-                            1  <input type="range" min="1" max="5" >  5
-                            <br><br>
-                            <label>Originality of the content (1 low, 5 high)</label><br><br>
-                            1  <input type="range" min="1" max="5" >  5
-                            <br><br>
+                            <div class="form-group">
+                                <label>Select wich content you want to feedback:</label>
+                                <input type='text' class='form-control' id='namefeedback' placeholder='Content you want to feedback:'>
+                                <br>
+                            </div>
+                            <label>Appreciation of the content (1 low, 5 high)</label>
+                            <br>
+                            <br> 1
+                            <input id="feddback1" type="range" min="1" max="5"> 5
+                            <br>
+                            <br>
+                            <label>Price fairness (1 low, 5 high)</label>
+                            <br>
+                            <br> 1
+                            <input id="feddback2" type="range" min="1" max="5"> 5
+                            <br>
+                            <br>
+                            <label>Originality of the content (1 low, 5 high)</label>
+                            <br>
+                            <br> 1
+                            <input id="feddback3" type="range" min="1" max="5"> 5
+                            <br>
+                            <br>
                             <button id='buttontofeedback' type='button' class='btn btn-raised btn-info'>Send FeedBack</button>
 
                         </div>

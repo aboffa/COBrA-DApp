@@ -103,17 +103,19 @@ contract ContentManagementContract{
     }
     
     function LeaveFeedBackStandard(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackStandard{
-        feedBack1+=feedBack1_;
-        feedBack2+=feedBack2_;
-        feedBack3+=feedBack3_;
+        require(feedBack1_ >= 1 && feedBack1_ <= 5 && feedBack2_ >= 1 && feedBack2_ <= 5 && feedBack3_ >= 1 && feedBack2_<= 5);
+        feedBack1 += feedBack1_;
+        feedBack2 += feedBack2_;
+        feedBack3 += feedBack3_;
         numfeedback++;
         AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack = false;
     }
     
     function LeaveFeedBackPremium(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackPremium{
-        feedBack1+=feedBack1_;
-        feedBack2+=feedBack2_;
-        feedBack3+=feedBack3_;
+        require(feedBack1_ >= 1 && feedBack1_ <= 5 && feedBack2_ >= 1 && feedBack2_ <= 5 && feedBack3_ >= 1 && feedBack2_ <= 5);
+        feedBack1 += feedBack1_;
+        feedBack2 += feedBack2_;
+        feedBack3 += feedBack3_;
         numfeedback++;
         AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack = false;
     }
