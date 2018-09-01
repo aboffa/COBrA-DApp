@@ -19,6 +19,7 @@
 <body>
     <div class="container">
         <div class="text-center">
+            <br>
             <img src="images/img.jpg" height="256" width="256">
             <br>
             <br>
@@ -29,9 +30,10 @@
             <h3 id="current-eth-address"></h3>
             <h3 id="current-eth-balance"></h3>
             <h3 id="current-eth-place"></h3>
-            <br>
+            <br><br>
             <div id="loginpanel" class="card border-success mb-3">
             </div>
+            <br><br>
             <div id='actionspanelcustomer' class="card bg-light mb-3">
                 <div class='card-header' style="background-color: #1E88E5">Actions as Customer</div>
                 <div class="card-body">
@@ -43,13 +45,13 @@
                                     <label>Name of the content:</label>
                                     <input type='text' class='form-control' id='namecontent' placeholder='Name of the content'>
                                     <br>
-                                    <button id='buttontogetaccesscontent' type='button' class='btn btn-raised btn-info'>Get access to content</button>
+                                    <button id='buttontogetaccesscontent' type='button' class='btn btn-raised btn-info'>Get
+                                        access to content</button>
 
                                 </div>
                             </form>
                         </div>
                     </div>
-
                     <br>
                     <div class='card bg-light mb-3'>
 
@@ -109,26 +111,25 @@
                                 <input type='text' class='form-control' id='namefeedback' placeholder='Content you want to feedback:'>
                                 <br>
                             </div>
-                            <label>Appreciation of the content (1 low, 5 high)</label>
+                            <label>Appreciation of the content (1 = very low, 5 = very high) </label>
                             <br>
                             <br> 1
-                            <input id="feddback1" type="range" min="1" max="5"> 5
+                            <input id="feedback1" type="range" min="1" max="5"> 5
                             <br>
                             <br>
-                            <label>Price fairness (1 low, 5 high)</label>
-                            <br>
-                            <br> 1
-                            <input id="feddback2" type="range" min="1" max="5"> 5
-                            <br>
-                            <br>
-                            <label>Originality of the content (1 low, 5 high)</label>
+                            <label>Price fairness (1 = very low, 5 = very high) </label>
                             <br>
                             <br> 1
-                            <input id="feddback3" type="range" min="1" max="5"> 5
+                            <input id="feedback2" type="range" min="1" max="5"> 5
+                            <br>
+                            <br>
+                            <label>Originality of the content (1 = very low, 5 = very high) </label>
+                            <br>
+                            <br> 1
+                            <input id="feedback3" type="range" min="1" max="5"> 5
                             <br>
                             <br>
                             <button id='buttontofeedback' type='button' class='btn btn-raised btn-info'>Send FeedBack</button>
-
                         </div>
                     </div>
                 </div>
@@ -186,21 +187,30 @@
                     <div class='card-header' style="background-color:#1E88E5">Statistics</div>
                     <div class="card-body">
                         <div class='card bg-light mb-3'>
-                            <div class='card-header' style="background-color:#64B5F6">Number of View</div>
-                            <div class="card-body">
-                                <br>
-                                <button id='buttontogetstatisticsviws' type='button' class='btn btn-raised btn-info'>Get number of view for each content</button>
-                            </div>
-                        </div>
-                        <br>
-                        <div class='card bg-light mb-3'>
                             <div class='card-header' style="background-color:#64B5F6">Content List</div>
                             <div class="card-body">
                                 <br>
-                                <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-raised btn-info'>Get the list of content</button>
+                                <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-raised btn-info'>Get
+                                    the list of content</button>
                                 <br>
                             </div>
                         </div>
+                        <div class='card bg-light mb-3'>
+                            <div class='card-header' style="background-color:#64B5F6">Number of View</div>
+                            <div class="card-body">
+                                <br>
+                                <button id='buttontogetstatisticsviws' type='button' class='btn btn-raised btn-info'>Get
+                                    number of view for each content</button>
+                            </div>
+                        </div>
+                        <div class='card bg-light mb-3'>
+                                <div class='card-header' style="background-color:#64B5F6">Feedbacks</div>
+                                <div class="card-body">
+                                    <br>
+                                    <button id='buttontogetfeedbacks' type='button' class='btn btn-raised btn-info'>Get
+                                        feedback mean for each content</button>
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>

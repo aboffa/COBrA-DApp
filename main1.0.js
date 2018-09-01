@@ -50,7 +50,6 @@ function setUpUI(isPremium) {
             displayErrorAfterButton("publishpanel", "Please insert name, genre and your artist name");
         }
         else {
-
             let namebyte = web3.utils.asciiToHex(name);
             let genrebytes = web3.utils.asciiToHex(genre);
             let priceint = Number(web3.utils.toWei($("#pricecontent").val(), 'ether'));
@@ -68,11 +67,16 @@ function setUpUI(isPremium) {
                     web3.eth.estimateGas({ data: bytecode })
                         .then(function (gasEstimate) {
                             console.log(gasEstimate);
-                            let myContract = new web3.eth.Contract(abi, { gas: 30000000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
+                            let myContract = new web3.eth.Contract(abi, { gas: 5000000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
+                            console.log(myContract);
                             return myContract
                                 .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
                                 // no 15*, check effective gas usage
-                                .send({ value: 0, gas: 1500000, gasPrice: '100000000000' });
+                                .send();
+                        })
+                        .catch(function (err) {//debug
+                            console.log("error while creating \n" + err);
+                            return;
                         })
                         .then(function (newContractInstance) {
                             console.log(newContractInstance);
@@ -88,7 +92,7 @@ function setUpUI(isPremium) {
                             $("#pricecontent").val("0.01");
                         })
                         .catch(err => console.log(err));//better error
-                })
+                });
         }
     });
     // Buttons for gifts 
@@ -105,7 +109,7 @@ function setUpUI(isPremium) {
                             .then(function (price) {
                                 if (window.confirm("You are gifting a content to " + address + ". Buying this content costs " + web3.utils.fromWei(price, 'ether') + " ether. Do you agree?")) {
                                     CatalogSmartContract.methods.GiftContent(namebytes, address)
-                                        .send({ value: price, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                                        .send({ value: price, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount })
                                         .then(function (result) {
                                             alert("Gifted!");
                                             console.log(result);
@@ -132,7 +136,7 @@ function setUpUI(isPremium) {
                     if (!isPremium) {
                         if (window.confirm("You are gifting a premium account to " + address + ". Buying premium costs 1 ether. Do you agree?")) {
                             CatalogSmartContract.methods.GiftPremium(address)
-                                .send({ value: web3.utils.toWei("1", "ether"), gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                                .send({ value: web3.utils.toWei("1", "ether"), gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount })
                                 .then(function (result) {
                                     alert("Gifted!");
                                     console.log(result);
@@ -184,6 +188,28 @@ function setUpUI(isPremium) {
             .catch(err => console.log(err));
     });
 
+    $("#buttontogetfeedbacks").click(function () {
+        var contentList;
+        CatalogSmartContract.methods.GetContentList()
+            .call()
+            .then(function (result) {
+                contentList = result;
+            })
+            .then(function () {
+                return CatalogSmartContract.methods.GetFeedBacks()
+                    .call();
+            }).then(function (result) {
+                var totalstring = "";
+                for (var i = 0; i < contentList.length; i++) {
+                    let namestring = web3.utils.hexToAscii(contentList[i]);
+                    console.log(namestring + "  views = " + result[i] +" "+(result[i]/1000));
+                    totalstring += (namestring + "  feedback mean = " + result[i]/1000 + "\n");
+                }
+                alert("Result : \n" + totalstring);
+            })
+            .catch(err => console.log(err));
+    });
+
     $("#buttontonotify").click(function () {
         let name = $("#nameauthornotify").val();
         let genre_ = $("#namegenrenotify").val();
@@ -227,7 +253,7 @@ function setUpUI(isPremium) {
             let namecontent = $("#namecontent").val();
             let namecontentbytes = web3.utils.asciiToHex(namecontent);
             CatalogSmartContract.methods.GetContentPremium(namecontentbytes)
-                .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount })
                 .then(function (result) {
                     console.log(result);
                     alert("Now you can consume content : " + namecontent);
@@ -247,7 +273,7 @@ function setUpUI(isPremium) {
                     console.log(address);
                     let ContentManagementContract = new web3.eth.Contract(abiContent, address);
                     return ContentManagementContract.methods.retriveContentPremium()
-                        .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                        .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
                 })
                 .then(function (transaction) {
                     alert(namecontent + " consumed.");
@@ -285,7 +311,7 @@ function setUpUI(isPremium) {
                 .then(function (price) {
                     if (window.confirm("Buying this content costs " + web3.utils.fromWei(price, 'ether') + " ether. Do you agree?")) {
                         CatalogSmartContract.methods.GetContent(namecontentbytes)
-                            .send({ value: price, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                            .send({ value: price, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount })
                             .then(function (transaction) {
                                 console.log(transaction);
                                 console.log("obtained access");
@@ -300,7 +326,7 @@ function setUpUI(isPremium) {
         });
 
         $("#buttontogetcontent").click(function () {
-            let name = $("#namecontentconsume").val()
+            let name = $("#namecontentconsume").val();
             let namebytes = web3.utils.asciiToHex(name);
             CatalogSmartContract.methods.getAddressContent(namebytes)
                 .call()
@@ -309,11 +335,10 @@ function setUpUI(isPremium) {
                     console.log(ContentManagementContract);
                     console.log("address of the content : ");
                     console.log(address);
-                    alert(name + " consumed.");
                     //maybe event
                     alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
                     return ContentManagementContract.methods.retriveContentStandard()
-                        .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount })
+                        .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
                 })
                 .then(function (transaction) {
                     console.log("obtained content");
@@ -322,7 +347,7 @@ function setUpUI(isPremium) {
                     console.log(err);
                     displayErrorInForm("namecontentconsume", "Error, are you sure you have rigth to access this content?");
                 });
-        })
+        });
 
         $("#buttontofeedback").click(function () {
             let content = $("#namefeedback").val();
@@ -330,9 +355,9 @@ function setUpUI(isPremium) {
                 displayErrorAfterButton("feedbackpanel", "Please select wich content you want to feedback");
             }
             else {
-                let f1 = $("#feddback1").val();
-                let f2 = $("#feddback2").val();
-                let f3 = $("#feddback3").val();
+                let f1 = $("#feedback1").val();
+                let f2 = $("#feedback2").val();
+                let f3 = $("#feedback3").val();
                 console.log(f1, f2, f3);
                 let contentbytes = web3.utils.asciiToHex(content);
                 CatalogSmartContract.methods.getAddressContent(contentbytes)
@@ -340,18 +365,16 @@ function setUpUI(isPremium) {
                     .then(function (address) {
                         let ContentManagementContract = new web3.eth.Contract(abiContent, address);
                         return ContentManagementContract.methods.LeaveFeedBackStandard(f1, f2, f3)
-                            .send({ value: 0, gas: 1500000, gasPrice: '100000000000', from: web3.eth.defaultAccount });
+                            .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
                     })
                     .then(function (transaction) {
                         console.log(transaction);
                     })
                     .catch(function (err) {
                         console.log(err);
-                    })
-
-
+                    });
             }
-        })
+        });
     }
 }
 
