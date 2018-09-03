@@ -9,9 +9,13 @@ contract CatalogSmartContract {
     address owner;
     mapping (address => uint) public premiumCustomers;
     address[] public contentManagers;
+    
     //degub 
     uint public mybalance=0;
-    uint public topay=0;
+    uint public gasUsedForTranfer=0;
+    uint public lastPayment = 0;
+    bool public toArtist = false;
+    bool public toSender = false;
     
     event ContentAccessObtainedStandard(bytes32 name, address addr);
     event ContentAccessObtainedPremium(bytes32 name, address addr);
@@ -106,21 +110,32 @@ contract CatalogSmartContract {
         require(a!=address(0));
     }
 
-    function PayArtist(uint startgas, address authorAddress, address sender_, uint price, uint viewsToPayments) public {
-            //bytes32 mostpopular = GetMostRathed(0);
-            //address addrmostpopular = GetContent(mostpopular);
-            //ContentManagementContract cmccasted = ContentManagementContract(addrmostpopular);
-            //uint feedbackmostpapular = cmccasted.getMean();
-            //COMPUTE RIGTH PAYMENT LOOKING THE MEAN FEEDBACK
-            mybalance = address(this).balance;
-            topay = price*viewsToPayments;
-            //PROBLEM 21,000 gas needed for the refound test 1 ether
-            //how much ether do a TRANFER need precisly?
-            authorAddress.transfer((price*viewsToPayments)-1000000000000000000);
-            //refound the caller
+    function PayArtist(uint startgas, address authorAddress, address contentAddress, uint price, uint viewsToPayments) public {
+            //check if content really has right views?
+            toArtist=false;
+            toSender=false;
+            ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed(0)));
+            uint feedbackmostpapular = cmccastedmostpopular.getMean();
+            if(feedbackmostpapular != 0 ){
+                ContentManagementContract cmccasted = ContentManagementContract(contentAddress);
+                uint feedbackcontenttopay = cmccasted.getMean();
+                if(feedbackcontenttopay != 0){
+                    uint ratio = (feedbackcontenttopay * 1000)/feedbackmostpapular;
+                    uint totranfer = ((price*viewsToPayments)/1000)*ratio;
+                    mybalance = address(this).balance;
+                    //PROBLEM 21,000 gas needed for the refound test 1 ether calculated 7524 but I need more precisely
+                    //how much ether do a TRANFER need precisly? looking the compiled code!!!!
+                    toArtist = authorAddress.send((totranfer));//-7600);
+                    lastPayment = totranfer;
+                }
+            }
             uint gasUsed = startgas - gasleft();
-            sender_.transfer(gasUsed);
+            if(address(this).balance > (gasUsed+8000)){
+                toSender = tx.origin.send(gasUsed+8000);
+                gasUsedForTranfer = gasUsed;
+            }
     }
+
     //Statistics
     function GetStatistics() public view returns (uint[] viewsarray ){
         viewsarray = new uint[](contentManagers.length);
@@ -223,11 +238,31 @@ contract CatalogSmartContract {
         }
     }
     
-    //First feedback is better then the second?
-    function compareFeedbacks(uint a, uint b, uint c, uint d,uint e,uint f, uint n,uint m) returns (bool result) {
-        result = (a+b+c)*m >= (d+e+f)*n;
+    function GetFeedBack1() public view returns (uint[] result) {
+        result = new uint[](contentManagers.length);
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            result[i] = cmccasted.getMeanFeedBack1();
+        }
+    }
+    function GetFeedBack2() public view returns (uint[] result) {
+        result = new uint[](contentManagers.length);
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            result[i] = cmccasted.getMeanFeedBack2();
+        }
+    }
+    function GetFeedBack3() public view returns (uint[] result) {
+        result = new uint[](contentManagers.length);
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            result[i] = cmccasted.getMeanFeedBack3();
+        }
     }
     function close() public onlyOwner {
+        //redistribute all balance 
         selfdestruct(owner);
     }
+    
+    function() public payable { }
 }

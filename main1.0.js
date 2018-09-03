@@ -9,7 +9,7 @@ var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[5];
+        web3.eth.defaultAccount = data[4];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -115,6 +115,10 @@ function setUpUI(isPremium) {
                                             console.log(result);
                                         });
                                 }
+                            })
+                            .catch(function (err) {
+                                displayErrorInForm("namecontentgift", "This content doesn't exist.");
+                                console.log(err);
                             });
                     }
                     else {
@@ -194,20 +198,68 @@ function setUpUI(isPremium) {
             .call()
             .then(function (result) {
                 contentList = result;
-            })
-            .then(function () {
-                return CatalogSmartContract.methods.GetFeedBacks()
-                    .call();
-            }).then(function (result) {
-                var totalstring = "";
-                for (var i = 0; i < contentList.length; i++) {
-                    let namestring = web3.utils.hexToAscii(contentList[i]);
-                    console.log(namestring + "  views = " + result[i] +" "+(result[i]/1000));
-                    totalstring += (namestring + "  feedback mean = " + result[i]/1000 + "\n");
-                }
-                alert("Result : \n" + totalstring);
-            })
-            .catch(err => console.log(err));
+            });
+        console.log($("#feedbacktoget").prop('selectedIndex'));
+        if ($("#feedbacktoget").prop('selectedIndex') == 0) {
+            CatalogSmartContract.methods.GetFeedBacks()
+                .call()
+                .then(function (result) {
+                    var totalstring = "";
+                    for (var i = 0; i < contentList.length; i++) {
+                        let namestring = web3.utils.hexToAscii(contentList[i]);
+                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
+                        totalstring += (namestring + "  all feedback mean = " + result[i] / 1000 + "\n");
+                    }
+                    alert("Result : \n" + totalstring);
+                    return;
+                })
+                .catch(err => console.log(err));
+        }
+        if ($("#feedbacktoget").prop('selectedIndex') == 1) {
+            CatalogSmartContract.methods.GetFeedBack1()
+                .call()
+                .then(function (result) {
+                    var totalstring = "";
+                    for (var i = 0; i < contentList.length; i++) {
+                        let namestring = web3.utils.hexToAscii(contentList[i]);
+                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
+                        totalstring += (namestring + "  'Appreciation of the content' feedback mean = " + result[i] / 1000 + "\n");
+                    }
+                    alert("Result : \n" + totalstring);
+                    return;
+                })
+                .catch(err => console.log(err));
+        }
+        if ($("#feedbacktoget").prop('selectedIndex') == 2) {
+            CatalogSmartContract.methods.GetFeedBack2()
+                .call()
+                .then(function (result) {
+                    var totalstring = "";
+                    for (var i = 0; i < contentList.length; i++) {
+                        let namestring = web3.utils.hexToAscii(contentList[i]);
+                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
+                        totalstring += (namestring + "  'Price fairness' feedback mean = " + result[i] / 1000 + "\n");
+                    }
+                    alert("Result : \n" + totalstring);
+                    return;
+                })
+                .catch(err => console.log(err));
+        }
+        if ($("#feedbacktoget").prop('selectedIndex') == 3) {
+            CatalogSmartContract.methods.GetFeedBack3()
+                .call()
+                .then(function (result) {
+                    var totalstring = "";
+                    for (var i = 0; i < contentList.length; i++) {
+                        let namestring = web3.utils.hexToAscii(contentList[i]);
+                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
+                        totalstring += (namestring + "  'Originality of the content' feedback mean = " + result[i] / 1000 + "\n");
+                    }
+                    alert("Result : \n" + totalstring);
+                    return;
+                })
+                .catch(err => console.log(err));
+        }
     });
 
     $("#buttontonotify").click(function () {
@@ -220,7 +272,7 @@ function setUpUI(isPremium) {
             if (name != "") {
                 alert("Subscribed to content published by " + name);
                 CatalogSmartContract.events.NewContentEvent(//{
-                    //filter: { autor: nameauthor } , <- doesn't work so I did it manually
+                    //filter: { autor: nameauthor } , <- doesn't work so I did it by myself
                     //}
                 )
                     .on('data', function (event) {
@@ -244,7 +296,40 @@ function setUpUI(isPremium) {
             }
         }
     });
-
+    $("#buttontofeedback").click(function () {
+        let content = $("#namefeedback").val();
+        if (content == "") {
+            displayErrorAfterButton("feedbackpanel", "Please select wich content you want to feedback");
+        }
+        else {
+            let f1 = $("#feedback1").val();
+            let f2 = $("#feedback2").val();
+            let f3 = $("#feedback3").val();
+            console.log(f1, f2, f3);
+            let contentbytes = web3.utils.asciiToHex(content);
+            CatalogSmartContract.methods.getAddressContent(contentbytes)
+                .call()
+                .then(function (address) {
+                    let ContentManagementContract = new web3.eth.Contract(abiContent, address);
+                    if (isPremium) {
+                        return ContentManagementContract.methods.LeaveFeedBackPremium(f1, f2, f3)
+                            .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
+                    }
+                    else {
+                        return ContentManagementContract.methods.LeaveFeedBackStandard(f1, f2, f3)
+                            .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
+                    }
+                })
+                .then(function (transaction) {
+                    console.log(transaction);
+                    alert("Feedback sent! Thank's!");
+                })
+                .catch(function (err) {
+                    console.log(err);
+                    displayErrorAfterButton("feedbackpanel", "Error sending feedback, have you consumed this content?");
+                });
+        }
+    });
     if (isPremium) {
         //Button action for Premium customer
         console.log("Setting up premium ui");
@@ -277,7 +362,7 @@ function setUpUI(isPremium) {
                 })
                 .then(function (transaction) {
                     alert(namecontent + " consumed.");
-                    console.log("obtained content");
+                    console.log("Content obtained.");
                 })
                 .catch(function (err) {
                     console.log(err);
@@ -316,12 +401,12 @@ function setUpUI(isPremium) {
                                 console.log(transaction);
                                 console.log("obtained access");
                                 alert("Payed " + web3.utils.fromWei(price, 'ether') + " Ether! Transaction hash = " + transaction.transactionHash);
-                            })
-                            .catch(function (err) {
-                                console.log(err);
-                                displayErrorInForm("namecontent", "Error, are you sure this content exists or you have the rigth ammount of Ether?");
                             });
                     }
+                })
+                .catch(function (err) {
+                    console.log(err);
+                    displayErrorInForm("namecontent", "Error, are you sure this content exists or you have the rigth ammount of Ether?");
                 });
         });
 
@@ -336,44 +421,19 @@ function setUpUI(isPremium) {
                     console.log("address of the content : ");
                     console.log(address);
                     //maybe event
-                    alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
+                    //alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
                     return ContentManagementContract.methods.retriveContentStandard()
                         .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
                 })
                 .then(function (transaction) {
-                    console.log("obtained content");
+                    alert(name + " consumed.");
+                    alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
+                    console.log("Content obtained.");
                 })
                 .catch(function (err) {
                     console.log(err);
                     displayErrorInForm("namecontentconsume", "Error, are you sure you have rigth to access this content?");
                 });
-        });
-
-        $("#buttontofeedback").click(function () {
-            let content = $("#namefeedback").val();
-            if (content == "") {
-                displayErrorAfterButton("feedbackpanel", "Please select wich content you want to feedback");
-            }
-            else {
-                let f1 = $("#feedback1").val();
-                let f2 = $("#feedback2").val();
-                let f3 = $("#feedback3").val();
-                console.log(f1, f2, f3);
-                let contentbytes = web3.utils.asciiToHex(content);
-                CatalogSmartContract.methods.getAddressContent(contentbytes)
-                    .call()
-                    .then(function (address) {
-                        let ContentManagementContract = new web3.eth.Contract(abiContent, address);
-                        return ContentManagementContract.methods.LeaveFeedBackStandard(f1, f2, f3)
-                            .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
-                    })
-                    .then(function (transaction) {
-                        console.log(transaction);
-                    })
-                    .catch(function (err) {
-                        console.log(err);
-                    });
-            }
         });
     }
 }
@@ -381,23 +441,10 @@ function setUpUI(isPremium) {
 function setUpEvents() {
     /*
     Event List 
-    event ContentAccessObtainedStandard(bytes32 name, address addr);
-    event ContentAccessObtainedPremium(bytes32 name, address addr);
-    event ContentAccessGifted(address from, bytes32 name, address to);
-    event PremiumGifted(address from, address to);
-    event NewContentEvent( bytes32 genre, bytes32 autor);
+    event ContentAccessObtainedStandard(bytes32 name, address addr); ???
+    event ContentAccessObtainedPremium(bytes32 name, address addr); ???
     */
     //Setting up events
-
-    /*
-            CatalogSmartContract.getPastEvents('ContenAccessObtained', {
-                fromBlock: 0,
-                toBlock: 'latest'
-            })
-                .then(function (events) {
-                    console.log(events) // same results as the optional callback above
-                });*/
-
     CatalogSmartContract.events.ContentAccessGifted()
         .on('data', function (event) {
             if (data.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
@@ -421,13 +468,25 @@ function displayErrorInForm(idElement, stringToAdd) {
     if ($("#" + idElement).next().is(".invalid-feedback")) {
         $("#" + idElement).next().remove();
     }
+    let newid = Math.floor(Math.random() * 100);
     $("#" + idElement).attr("class", "form-control is-invalid");
-    $("#" + idElement).after("<div class='invalid-feedback'>" + stringToAdd + "</div>");
+    $("#" + idElement).after("<div  id='" + newid + "' class='invalid-feedback'>" + stringToAdd + "</div>");
+    setTimeout(function () {
+        if ($('#' + newid + '').length > 0) {
+            $('#' + newid + '').remove();
+        }
+    }, 4000);
 }
 
 function displayErrorAfterButton(idElement, stringToAdd) {
     if ($("#" + idElement).children().last().attr("class") == undefined) {
         $("#" + idElement).children().last().remove();
     }
-    $("#" + idElement).append("<div style='color: #ff0000' >" + stringToAdd + "</div> ");
+    let newid = Math.floor(Math.random() * 100);
+    $("#" + idElement).append("<div id='" + newid + "' style='color: #ff0000' >" + stringToAdd + "</div> ");
+    setTimeout(function () {
+        if ($('#' + newid + '').length > 0) {
+            $('#' + newid + '').remove();
+        }
+    }, 4000);
 }

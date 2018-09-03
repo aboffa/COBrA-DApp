@@ -5,7 +5,7 @@ import "./CatalogSmartContract.sol";
 contract ContentManagementContract{
     //not public maybe internal
     //no uint 
-    uint public viewsToPayments = 5;
+    uint public viewsToPayments = 3;
     bytes32 public genre;
     bytes32 public name;
     address public authorAddress;
@@ -102,7 +102,7 @@ contract ContentManagementContract{
             uint startGas = gasleft();
             //trigger payments
             CatalogSmartContract catalogcasted = CatalogSmartContract(catalog);
-            catalogcasted.PayArtist(startGas, authorAddress,msg.sender,price, viewsToPayments);
+            catalogcasted.PayArtist(startGas, authorAddress, address(this), price, viewsToPayments);
         }
         
     }

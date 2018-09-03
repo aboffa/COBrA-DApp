@@ -2,3 +2,6 @@ div.card-header {
     font-size: large;
     font-weight: bold;
 }
+body {
+    background-color: lightblue !important;;
+}
