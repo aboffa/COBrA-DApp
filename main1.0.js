@@ -9,7 +9,7 @@ var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[4];
+        web3.eth.defaultAccount = data[2];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -39,60 +39,62 @@ web3.eth.getAccounts()
     });
 
 function setUpUI(isPremium) {
+    var contractFileSelected;
     //Setting up Buttons action
+
     //Button action for Artist Panel
+    $("#inputfile").on('change', function (file) {
+        contractFileSelected = $('#inputfile').prop('files')[0];
+        console.log(contractFileSelected);
+    });
     $("#buttontopublishcontent").click(function () {
         //parse input
         let name = $("#namecontenttopublish").val();
         let genre = $("#genrecontent").val();
         let artist = $("#artistname").val();
-        if (name == "" || genre == "" || artist == "") {
-            displayErrorAfterButton("publishpanel", "Please insert name, genre and your artist name");
+        if (name == "" || genre == "" || artist == "" || contractFileSelected == null) {
+            displayErrorAfterButton("publishpanel", "Please insert name, genre, your artist name and select the compliled contract");
         }
         else {
             let namebyte = web3.utils.asciiToHex(name);
             let genrebytes = web3.utils.asciiToHex(genre);
             let priceint = Number(web3.utils.toWei($("#pricecontent").val(), 'ether'));
             let artistnamebyte = web3.utils.asciiToHex(artist);
-            //console.log(name, genre, data, price, artistname);
-            //getting the compiled contract
-            //Compiled contract with $ solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json
-            $.getJSON("./misc/contentContract.json",
-                function (data) {
-                    console.log(data);
-                    let abi = JSON.parse(data.contracts["ContentManagerContract.sol:ContentManagementContract"].abi);
-                    let code = '0x' + data.contracts["ContentManagerContract.sol:ContentManagementContract"].bin;
-                    console.log("Deploying the contract");
-                    let bytecode = data.contracts["ContentManagerContract.sol:ContentManagementContract"].bytecode;
-                    web3.eth.estimateGas({ data: bytecode })
-                        .then(function (gasEstimate) {
-                            console.log(gasEstimate);
-                            let myContract = new web3.eth.Contract(abi, { gas: 5000000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
-                            console.log(myContract);
-                            return myContract
-                                .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
-                                // no 15*, check effective gas usage
-                                .send();
-                        })
-                        .catch(function (err) {//debug
-                            console.log("error while creating \n" + err);
-                            return;
-                        })
-                        .then(function (newContractInstance) {
-                            console.log(newContractInstance);
-                            return CatalogSmartContract.methods.NewContent(newContractInstance.options.address, genrebytes, artistnamebyte)
-                                .send({ from: web3.eth.defaultAccount });
-                        })
-                        .then(function () {
-                            console.log("Ok");
-                            alert("Content " + name + " published!");
-                            $("#namecontenttopublish").val("");
-                            $("#genrecontent").val("");
-                            $("#artistname").val("");
-                            $("#pricecontent").val("0.01");
-                        })
-                        .catch(err => console.log(err));//better error
-                });
+            console.log(contractFileSelected);
+            let fr = new FileReader();
+            fr.onload = function (result) {
+                let jsonContract = JSON.parse(result.target.result);
+                console.log(jsonContract);
+                //name of the json file have o be the name of the Contract, in a different file of ContentManager
+                let nameContract = contractFileSelected.name.slice(0, -5);
+                let nameInJson = nameContract + ".sol:" + nameContract;
+                let abi = JSON.parse(jsonContract.contracts[nameInJson].abi);
+                let code = '0x' + jsonContract.contracts[nameInJson].bin;
+                console.log("Deploying the contract");
+                let myContract = new web3.eth.Contract(abi, { gas: 3000000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
+                console.log(myContract);
+                return myContract
+                    .deploy({ data: code, arguments: [namebyte, genrebytes, priceint, artistnamebyte, catalogAddress] })
+                    .send()
+                    .then(function (newContractInstance) {
+                        console.log(newContractInstance);
+                        return CatalogSmartContract.methods.NewContent(newContractInstance.options.address)
+                            .send({ gas: 3000000, from: web3.eth.defaultAccount });
+                    })
+                    .then(function () {
+                        console.log("Ok");
+                        alert("Content " + name + " published!");
+                        $("#namecontenttopublish").val("");
+                        $("#genrecontent").val("");
+                        $("#artistname").val("");
+                        $("#pricecontent").val("0.01");
+                    })
+                    .catch(function (err){
+                        console.log(err);
+                        displayErrorAfterButton("publishpanel", "Something goes wrong. Maybe you choose a name of content that already exist, or you choose a author name that already exist ");
+                    });
+            };
+            fr.readAsText(contractFileSelected);
         }
     });
     // Buttons for gifts 
@@ -200,7 +202,8 @@ function setUpUI(isPremium) {
                 contentList = result;
             });
         console.log($("#feedbacktoget").prop('selectedIndex'));
-        if ($("#feedbacktoget").prop('selectedIndex') == 0) {
+        let selectedIndex = $("#feedbacktoget").prop('selectedIndex');
+        if (selectedIndex == 0) {
             CatalogSmartContract.methods.GetFeedBacks()
                 .call()
                 .then(function (result) {
@@ -215,8 +218,8 @@ function setUpUI(isPremium) {
                 })
                 .catch(err => console.log(err));
         }
-        if ($("#feedbacktoget").prop('selectedIndex') == 1) {
-            CatalogSmartContract.methods.GetFeedBack1()
+        if (selectedIndex >= 1 && selectedIndex <=3 ) {
+            CatalogSmartContract.methods.GetMeanFeedBackCategory(selectedIndex)
                 .call()
                 .then(function (result) {
                     var totalstring = "";
@@ -230,38 +233,8 @@ function setUpUI(isPremium) {
                 })
                 .catch(err => console.log(err));
         }
-        if ($("#feedbacktoget").prop('selectedIndex') == 2) {
-            CatalogSmartContract.methods.GetFeedBack2()
-                .call()
-                .then(function (result) {
-                    var totalstring = "";
-                    for (var i = 0; i < contentList.length; i++) {
-                        let namestring = web3.utils.hexToAscii(contentList[i]);
-                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
-                        totalstring += (namestring + "  'Price fairness' feedback mean = " + result[i] / 1000 + "\n");
-                    }
-                    alert("Result : \n" + totalstring);
-                    return;
-                })
-                .catch(err => console.log(err));
-        }
-        if ($("#feedbacktoget").prop('selectedIndex') == 3) {
-            CatalogSmartContract.methods.GetFeedBack3()
-                .call()
-                .then(function (result) {
-                    var totalstring = "";
-                    for (var i = 0; i < contentList.length; i++) {
-                        let namestring = web3.utils.hexToAscii(contentList[i]);
-                        console.log(namestring + "  views = " + result[i] + " " + (result[i] / 1000));
-                        totalstring += (namestring + "  'Originality of the content' feedback mean = " + result[i] / 1000 + "\n");
-                    }
-                    alert("Result : \n" + totalstring);
-                    return;
-                })
-                .catch(err => console.log(err));
-        }
     });
-
+    // Button action for notification
     $("#buttontonotify").click(function () {
         let name = $("#nameauthornotify").val();
         let genre_ = $("#namegenrenotify").val();
@@ -277,7 +250,7 @@ function setUpUI(isPremium) {
                 )
                     .on('data', function (event) {
                         if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(name) == 0) {
-                            alert("New content published from " + name);
+                            alert("NOTIFICATION: New content published from " + name);
                             console.log(event);
                         }
                     })
@@ -288,7 +261,7 @@ function setUpUI(isPremium) {
                 CatalogSmartContract.events.NewContentEvent()
                     .on('data', function (event) {
                         if (web3.utils.hexToAscii(event.returnValues.genre).localeCompare(genre_) == 0) {
-                            alert("New content published of genre " + genre_);
+                            alert("NOTIFICATION: New content published of genre " + genre_);
                             console.log(event);
                         }
                     })
@@ -296,6 +269,8 @@ function setUpUI(isPremium) {
             }
         }
     });
+
+    // Button action for leave a feedback
     $("#buttontofeedback").click(function () {
         let content = $("#namefeedback").val();
         if (content == "") {
@@ -330,6 +305,7 @@ function setUpUI(isPremium) {
                 });
         }
     });
+
     if (isPremium) {
         //Button action for Premium customer
         console.log("Setting up premium ui");
@@ -420,7 +396,6 @@ function setUpUI(isPremium) {
                     console.log(ContentManagementContract);
                     console.log("address of the content : ");
                     console.log(address);
-                    //maybe event
                     //alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
                     return ContentManagementContract.methods.retriveContentStandard()
                         .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
@@ -437,8 +412,18 @@ function setUpUI(isPremium) {
         });
     }
 }
+//debug 
+$("#close").click(function () {
+    CatalogSmartContract.methods.close()
+        .send({ from: web3.eth.defaultAccount })
+        .then(function (result) {
+            console.log(result);
+        })
+        .catch(err => console.log(err));
+});
 
 function setUpEvents() {
+    //For notification
     /*
     Event List 
     event ContentAccessObtainedStandard(bytes32 name, address addr); ???
@@ -448,7 +433,7 @@ function setUpEvents() {
     CatalogSmartContract.events.ContentAccessGifted()
         .on('data', function (event) {
             if (data.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
-                alert(data.returnValues.from + " gifted you content: " + data.returnValues.name + "!");
+                alert("NOTIFICATION: " + data.returnValues.from + " gifted you content: " + data.returnValues.name + "!");
             }
         })
         .on('error', console.error);
@@ -456,7 +441,7 @@ function setUpEvents() {
     CatalogSmartContract.events.PremiumGifted()
         .on('data', function (event) {
             if (event.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
-                alert(event.returnValues.from + " gifted you a Premium account!");
+                alert("NOTIFICATION: " + event.returnValues.from + " gifted you a Premium account!");
                 location.reload();
             }
         })

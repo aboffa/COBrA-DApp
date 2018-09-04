@@ -167,6 +167,11 @@
                                     <option>0.5</option>
                                 </select>
                             </div>
+                            <div>
+                                <label>Select your ContentManagerContract :</label> <br><br>
+                                <input type="file" data-toggle="tooltip" data-placement="top" title="Compile your contract with : solc <contract>.sol --combined-json abi,asm,ast,bin,bin-runtime,clone-bin,devdoc,interface,opcodes,srcmap,srcmap-runtime,userdoc > <contract>.json and select it (read docs for more informations) "
+                                    id="inputfile">
+                                <!--
                             <div id="wichcontract" class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1" checked>
                                 <label class="form-check-label" for="inlineRadio1">Defult content</label>
@@ -174,56 +179,70 @@
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">
                                 <label class="form-check-label" for="inlineRadio2">Custom content</label>
+                            </div>-->
                             </div>
-                            <br>
-                            <br>
                             <br>
                             <br>
                             <button id='buttontopublishcontent' class='btn btn-raised btn-info'>Publish content</button>
                         </div>
                     </div>
                 </div>
-                <div id='actionspanelstatistic' class="card bg-light mb-3">
-                    <div class='card-header' style="background-color:#1E88E5">Statistics</div>
-                    <div class="card-body">
-                        <div class='card bg-light mb-3'>
-                            <div class='card-header' style="background-color:#64B5F6">Content List</div>
-                            <div class="card-body">
-                                <br>
-                                <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-raised btn-info'>Get
-                                    the list of content</button>
-                                <br>
-                            </div>
+            </div>
+            <div id='actionspanelstatistic' class="card bg-light mb-3">
+                <div class='card-header' style="background-color:#1E88E5">Statistics</div>
+                <div class="card-body">
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header' style="background-color:#64B5F6">Content List</div>
+                        <div class="card-body">
+                            <br>
+                            <button id='buttontogetstatisticscontentlist' type='button' class='btn btn-raised btn-info'>Get
+                                the list of content</button>
+                            <br>
                         </div>
-                        <div class='card bg-light mb-3'>
-                            <div class='card-header' style="background-color:#64B5F6">Number of View</div>
-                            <div class="card-body">
-                                <br>
-                                <button id='buttontogetstatisticsviws' type='button' class='btn btn-raised btn-info'>Get
-                                    number of view for each content</button>
-                            </div>
+                    </div>
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header' style="background-color:#64B5F6">Number of View</div>
+                        <div class="card-body">
+                            <br>
+                            <button id='buttontogetstatisticsviws' type='button' class='btn btn-raised btn-info'>Get number
+                                of view for each content</button>
                         </div>
-                        <div class='card bg-light mb-3'>
-                            <div class='card-header' style="background-color:#64B5F6">Feedbacks</div>
-                            <div class="card-body">
-                                <br>
-                                <div class="form-group">
-                                    <label>Wich feedback you want to consider?</label>
-                                    <select class="form-control" id="feedbacktoget">
-                                        <option>All</option>
-                                        <option>Appreciation of the content</option>
-                                        <option>Price fairness</option>
-                                        <option>Originality of the content</option>
-                                    </select>
-                                </div>
-                                <button id='buttontogetfeedbacks' type='button' class='btn btn-raised btn-info'>Get feedback
-                                    mean for each content</button>
+                    </div>
+                    <div class='card bg-light mb-3'>
+                        <div class='card-header' style="background-color:#64B5F6">Feedbacks</div>
+                        <div class="card-body">
+                            <br>
+                            <div class="form-group">
+                                <label>Wich feedback you want to consider?</label>
+                                <select class="form-control" id="feedbacktoget">
+                                    <option>All</option>
+                                    <option>Appreciation of the content</option>
+                                    <option>Price fairness</option>
+                                    <option>Originality of the content</option>
+                                </select>
                             </div>
+                            <button id='buttontogetfeedbacks' type='button' class='btn btn-raised btn-info'>Get feedback
+                                mean for each content</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- degub -->
+        <div align='right'>
+            <button id='close' type='button' class='btn btn-raised btn-info'>Close calog</button>
+        </div>
+        <br>
+        <a style="background-color:black;color:white;text-decoration:none;padding:4px 6px;font-family:-apple-system, BlinkMacSystemFont, &quot;San Francisco&quot;, &quot;Helvetica Neue&quot;, Helvetica, Ubuntu, Roboto, Noto, &quot;Segoe UI&quot;, Arial, sans-serif;font-size:12px;font-weight:bold;line-height:1.2;display:inline-block;border-radius:3px"
+            href="https://unsplash.com/@d_che?utm_medium=referral&amp;utm_campaign=photographer-credit&amp;utm_content=creditBadge"
+            target="_blank" rel="noopener noreferrer" title="Download free do whatever you want high-resolution photos from Daniel Chen"><span
+                style="display:inline-block;padding:2px 3px"><svg xmlns="http://www.w3.org/2000/svg" style="height:12px;width:auto;position:relative;vertical-align:middle;top:-1px;fill:white"
+                    viewBox="0 0 32 32"><title>unsplash-logo</title>
+                    <path d="M20.8 18.1c0 2.7-2.2 4.8-4.8 4.8s-4.8-2.1-4.8-4.8c0-2.7 2.2-4.8 4.8-4.8 2.7.1 4.8 2.2 4.8 4.8zm11.2-7.4v14.9c0 2.3-1.9 4.3-4.3 4.3h-23.4c-2.4 0-4.3-1.9-4.3-4.3v-15c0-2.3 1.9-4.3 4.3-4.3h3.7l.8-2.3c.4-1.1 1.7-2 2.9-2h8.6c1.2 0 2.5.9 2.9 2l.8 2.4h3.7c2.4 0 4.3 1.9 4.3 4.3zm-8.6 7.5c0-4.1-3.3-7.5-7.5-7.5-4.1 0-7.5 3.4-7.5 7.5s3.3 7.5 7.5 7.5c4.2-.1 7.5-3.4 7.5-7.5z"></path></svg></span><span
+                style="display:inline-block;padding:2px 3px">Daniel Chen</span>
+        </a>
+    </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>

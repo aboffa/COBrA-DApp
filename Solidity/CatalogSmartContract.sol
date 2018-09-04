@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./ContentManagerContract.sol";
+import "./ContentManagementContract.sol";
 
 contract CatalogSmartContract {
     //public for debug
@@ -8,17 +8,19 @@ contract CatalogSmartContract {
     uint public BlockForPremium = 10;
     address owner;
     mapping (address => uint) public premiumCustomers;
+    mapping (bytes32 => address) public mapNameAddress;
     address[] public contentManagers;
     
     //degub 
     uint public mybalance=0;
     uint public gasUsedForTranfer=0;
     uint public lastPayment = 0;
-    bool public toArtist = false;
-    bool public toSender = false;
     
+    // Used to log
     event ContentAccessObtainedStandard(bytes32 name, address addr);
     event ContentAccessObtainedPremium(bytes32 name, address addr);
+    
+    // Used to notify users about important event
     event ContentAccessGifted(address from, bytes32 name, address to);
     event PremiumGifted(address from, address to);
     event NewContentEvent( bytes32 genre, bytes32 autor);
@@ -48,25 +50,35 @@ contract CatalogSmartContract {
         premiumCustomers[msg.sender] = block.number + BlockForPremium;
     }
     
-    function NewContent(address cmc, bytes32 genre_, bytes32 authorName_) public {
+    function NewContent(address cmc) public {
+        ContentManagementContract newcmc = ContentManagementContract(cmc);
+        bytes32 name = newcmc.name();
+        for (uint i = 0; i< contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            require (cmccasted.name() != name, "We don't want two contents with the same name");
+            if(cmccasted.authorName() == newcmc.authorName()){
+                require(cmccasted.authorAddress() == newcmc.authorAddress(), "There is an other author with this name");
+            }
+        }
+        mapNameAddress[name] = cmc;
         contentManagers.push(cmc);
-        emit NewContentEvent(genre_, authorName_);
+        emit NewContentEvent(newcmc.genre(), newcmc.authorName());
     }
     
     function GetContent(bytes32 name_) payable public returns (address cm) {
         cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
-        require(msg.value >= price, "You have to pay the right amount!" );
+        require(msg.value >= price, "You have to pay the right amount!");
         cmccasted.setEnabledStandard(msg.sender);
-        emit ContentAccessObtainedStandard(name_, cm);
+        emit ContentAccessObtainedStandard(name_, msg.sender);
     }
     
     function GetContentPremium(bytes32 name_) public isStillPremium {
         address cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         cmccasted.setEnabledPremium(msg.sender, premiumCustomers[msg.sender]);
-        emit ContentAccessObtainedPremium(name_, cm);
+        emit ContentAccessObtainedPremium(name_, msg.sender);
     }
     
     function getPriceContent(bytes32 name_) view public returns (uint price) {
@@ -99,40 +111,32 @@ contract CatalogSmartContract {
     }
 
     function fromNametoContent(bytes32 name_) view private returns (address a){
-        a=address(0);
-        for (uint i = 0; i< contentManagers.length; i++){
-            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
-            if(cmccasted.name() == name_){
-                a=contentManagers[i];
-                break;
-            }
-        }
-        require(a!=address(0));
+        a = mapNameAddress[name_];
+        require(a!=address(0), "This content doesn't exit");
     }
 
-    function PayArtist(uint startgas, address authorAddress, address contentAddress, uint price, uint viewsToPayments) public {
-            //check if content really has right views?
-            toArtist=false;
-            toSender=false;
+    function PayArtist(uint startgas) public {
+            ContentManagementContract cmccasted = ContentManagementContract(msg.sender);
+            assert((cmccasted.views() % cmccasted.viewsToPayments()) == 0);
             ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed(0)));
             uint feedbackmostpapular = cmccastedmostpopular.getMean();
             if(feedbackmostpapular != 0 ){
-                ContentManagementContract cmccasted = ContentManagementContract(contentAddress);
                 uint feedbackcontenttopay = cmccasted.getMean();
                 if(feedbackcontenttopay != 0){
                     uint ratio = (feedbackcontenttopay * 1000)/feedbackmostpapular;
-                    uint totranfer = ((price*viewsToPayments)/1000)*ratio;
+                    uint totranfer = ((cmccasted.price()*cmccastedmostpopular.viewsToPayments())/1000)*ratio;
                     mybalance = address(this).balance;
                     //PROBLEM 21,000 gas needed for the refound test 1 ether calculated 7524 but I need more precisely
                     //how much ether do a TRANFER need precisly? looking the compiled code!!!!
-                    toArtist = authorAddress.send((totranfer));//-7600);
+                    cmccasted.authorAddress().transfer((totranfer));
                     lastPayment = totranfer;
                 }
             }
             uint gasUsed = startgas - gasleft();
-            if(address(this).balance > (gasUsed+8000)){
-                toSender = tx.origin.send(gasUsed+8000);
-                gasUsedForTranfer = gasUsed;
+            uint toRefound = ((gasUsed+8000)*tx.gasprice);
+            if(address(this).balance > toRefound ){
+                tx.origin.transfer(toRefound);
+                gasUsedForTranfer = toRefound;
             }
     }
 
@@ -153,82 +157,127 @@ contract CatalogSmartContract {
         }
     }
     
-    /*
-    function GetNewContentList() public view returns (bytes32[] result){
-        
-    }
     
-    function GetLatestByGenre(bytes32 genre) public view returns (bytes32[] result){
-        
-    }
-    function GetMostPopularByGenre(bytes32 genre) public view returns (bytes32[] result){
-        
-    }
-
-    function GetLatestByAuthor(bytes32 author) public view returns (bytes32[] result){
-        
-    }    
-    
-    function GetMostPopularByAuthor(bytes32 author) public view returns (bytes32[] result ){
-        
-    }
-    */
-    function GetMostRathed(uint8 feedbackCategory) public view returns (bytes32 result ){
-        if(feedbackCategory == 1){
-            uint maxtmpi = 0;
-            for (uint i = 0; i<contentManagers.length; i++){
-                ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
-                if(cmccastedi.getMeanFeedBack1() >= maxtmpi){
-                    maxtmpi = cmccastedi.getMeanFeedBack1();
-                    result = cmccastedi.name();
-                }
-            }
+    function GetNewContentList(uint num) public view returns (bytes32[] result){
+        if(num >= contentManagers.length){
+            result = GetContentList();
         }
         else{
-            if(feedbackCategory == 2){
-                uint maxtmpj = 0;
-                for (uint j = 0; j<contentManagers.length; j++){
-                    ContentManagementContract cmccastedj = ContentManagementContract(contentManagers[j]);
-                    if(cmccastedj.getMeanFeedBack2() >= maxtmpj){
-                        maxtmpj = cmccastedj.getMeanFeedBack2();
-                        result = cmccastedj.name();
-                    }
-                }   
-            }
-            else{
-                if(feedbackCategory == 3){
-                    uint maxtmph = 0;
-                    for (uint h = 0; h<contentManagers.length; h++){
-                        ContentManagementContract cmccastedh = ContentManagementContract(contentManagers[h]);
-                        if(cmccastedh.getMeanFeedBack3() >= maxtmph){
-                            maxtmph = cmccastedh.getMeanFeedBack3();
-                            result = cmccastedh.name();
-                        }
-                    }   
-                }
-                else{
-                    uint maxmeantmp = 0;
-                    for (uint k = 0; k<contentManagers.length; k++){
-                        ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
-                        if(cmccastedk.getMean() >= maxmeantmp){
-                            maxmeantmp = cmccastedk.getMean();
-                            result = cmccastedk.name();
-                        }
-                    } 
-                }
+            result = new bytes32[](num);
+            for(uint i = 0; i < num; i++){
+                ContentManagementContract cmccasted = ContentManagementContract(contentManagers[contentManagers.length - 1 - num]);
+                result[i] = cmccasted.name();
             }
         }
     }
     
-    /*
-    function GetMostRathedByGenre(bytes32 genre, uint8 feedbackCategory) public view returns (bytes32[] result ){
-        
+    function GetLatestByGenre(bytes32 genre_) public view returns (bytes32 result){
+        for (uint i = contentManagers.length; i>=0; i--){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            if(cmccasted.genre() == genre_ ){
+                result = cmccasted.name();
+                break;
+            }
+        }        
     }
     
-    function GetMostRathedByAuthor(bytes32 author, uint8 feedbackCategory) public view returns (bytes32[] result ){
-        
+    function GetMostPopularByGenre(bytes32 genre_) public view returns (bytes32 result){
+        uint viewsmax;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            if(cmccasted.genre() == genre_ && viewsmax <= cmccasted.views() ){
+                result = cmccasted.name();
+                viewsmax = cmccasted.views();
+            }
+        }    
     }
-    */
+
+    function GetLatestByAuthor(bytes32 author) public view returns (bytes32 result){
+        for (uint i = contentManagers.length; i>=0; i--){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            if(cmccasted.authorName() == author ){
+                result = cmccasted.name();
+                break;
+            }
+        }   
+    }    
+    
+    function GetMostPopularByAuthor(bytes32 author) public view returns (bytes32 result ){
+        uint viewsmax;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            if(cmccasted.genre() == author && viewsmax <= cmccasted.views() ){
+                result = cmccasted.name();
+                viewsmax = cmccasted.views();
+            }
+        }  
+    }
+    function GetMostRathed() public view returns (bytes32 result ){
+        uint maxmeantmp = 0;
+        for (uint k = 0; k<contentManagers.length; k++){
+            ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
+            if(cmccastedk.getMean() >= maxmeantmp){
+                maxmeantmp = cmccastedk.getMean();
+                result = cmccastedk.name();
+            }
+        }
+    } 
+        
+    function GetMostRathed(uint8 feedbackCategory) public view returns (bytes32 result ){
+        uint maxtmpi = 0;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
+            if(cmccastedi.getMeanFeedBackCategory(feedbackCategory) >= maxtmpi){
+                maxtmpi = cmccastedi.getMeanFeedBackCategory(feedbackCategory);
+                result = cmccastedi.name();
+            }
+        }
+    }
+    
+    function GetMostRathedByGenre(bytes32 genre) public view returns (bytes32 result ){
+        uint maxmeantmp = 0;
+        for (uint k = 0; k<contentManagers.length; k++){
+            ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
+            if(cmccastedk.getMean() >= maxmeantmp && cmccastedk.genre() == genre){
+                maxmeantmp = cmccastedk.getMean();
+                result = cmccastedk.name();
+            }
+        }
+    }
+    
+    function GetMostRathedByGenre(bytes32 genre, uint8 feedbackCategory) public view returns (bytes32 result ){
+        uint maxtmpi = 0;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
+            if(cmccastedi.getMeanFeedBackCategory(feedbackCategory) >= maxtmpi && cmccastedi.genre() == genre ){
+                maxtmpi = cmccastedi.getMeanFeedBackCategory(feedbackCategory);
+                result = cmccastedi.name();
+            }
+        }
+    }
+    
+    function GetMostRathedByAuthor(bytes32 author) public view returns (bytes32 result ){
+        uint maxmeantmp = 0;
+        for (uint k = 0; k<contentManagers.length; k++){
+            ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
+            if(cmccastedk.getMean() >= maxmeantmp && cmccastedk.authorName() == author){
+                maxmeantmp = cmccastedk.getMean();
+                result = cmccastedk.name();
+            }
+        }
+    }
+    
+    function GetMostRathedByAuthor(bytes32 author, uint8 feedbackCategory) public view returns (bytes32 result ){
+        uint maxtmpi = 0;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
+            if(cmccastedi.getMeanFeedBackCategory(feedbackCategory) >= maxtmpi && cmccastedi.authorName() == author ){
+                maxtmpi = cmccastedi.getMeanFeedBackCategory(feedbackCategory);
+                result = cmccastedi.name();
+            }
+        }      
+    }
+    
     
     function GetFeedBacks() public view returns (uint[] result) {
         result = new uint[](contentManagers.length);
@@ -238,29 +287,28 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetFeedBack1() public view returns (uint[] result) {
+    function GetMeanFeedBackCategory(uint8 feedbackCategory) public view returns (uint[] result) {
         result = new uint[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
-            result[i] = cmccasted.getMeanFeedBack1();
-        }
-    }
-    function GetFeedBack2() public view returns (uint[] result) {
-        result = new uint[](contentManagers.length);
-        for (uint i = 0; i<contentManagers.length; i++){
-            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
-            result[i] = cmccasted.getMeanFeedBack2();
-        }
-    }
-    function GetFeedBack3() public view returns (uint[] result) {
-        result = new uint[](contentManagers.length);
-        for (uint i = 0; i<contentManagers.length; i++){
-            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
-            result[i] = cmccasted.getMeanFeedBack3();
+            result[i] = cmccasted.getMeanFeedBackCategory(feedbackCategory);
         }
     }
     function close() public onlyOwner {
-        //redistribute all balance 
+        uint sumviews = 0;
+        for (uint i = 0; i<contentManagers.length; i++){
+            ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
+            sumviews += cmccasted.views();
+        }
+        uint portionPerView = address(this).balance / sumviews;
+        for (uint j = 0; j<contentManagers.length; j++){
+            ContentManagementContract cmccastedj = ContentManagementContract(contentManagers[j]);
+                cmccastedj.authorAddress().transfer(portionPerView * cmccastedj.views());
+        }
+        for (uint h = 0; h<contentManagers.length; h++){
+            ContentManagementContract cmccastedh = ContentManagementContract(contentManagers[h]);
+            cmccastedh.close();
+        }
         selfdestruct(owner);
     }
     
