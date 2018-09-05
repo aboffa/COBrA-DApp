@@ -10,12 +10,7 @@ contract CatalogSmartContract {
     mapping (address => uint) public premiumCustomers;
     mapping (bytes32 => address) public mapNameAddress;
     address[] public contentManagers;
-    
-    //degub 
-    uint public mybalance=0;
-    uint public gasUsedForTranfer=0;
-    uint public lastPayment = 0;
-    
+
     // Used to log
     event ContentAccessObtainedStandard(bytes32 name, address addr);
     event ContentAccessObtainedPremium(bytes32 name, address addr);
@@ -53,7 +48,7 @@ contract CatalogSmartContract {
     function NewContent(address cmc) public {
         ContentManagementContract newcmc = ContentManagementContract(cmc);
         bytes32 name = newcmc.name();
-        for (uint i = 0; i< contentManagers.length; i++){
+        for (uint i = 0; i < contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
             require (cmccasted.name() != name, "We don't want two contents with the same name");
             if(cmccasted.authorName() == newcmc.authorName()){
@@ -65,8 +60,8 @@ contract CatalogSmartContract {
         emit NewContentEvent(newcmc.genre(), newcmc.authorName());
     }
     
-    function GetContent(bytes32 name_) payable public returns (address cm) {
-        cm = fromNametoContent(name_);
+    function GetContent(bytes32 name_) payable public {
+        address cm = fromNametoContent(name_);
         ContentManagementContract cmccasted = ContentManagementContract(cm);
         uint price = cmccasted.price();
         require(msg.value >= price, "You have to pay the right amount!");
@@ -92,7 +87,7 @@ contract CatalogSmartContract {
     
     }
     function GiftPremium(address a)  payable public {
-        require(msg.value >= WeiForPremium);
+        require(msg.value >= WeiForPremium, "You have to pay the right amount!");
         premiumCustomers[a] = block.number + BlockForPremium;
         emit PremiumGifted(msg.sender, a);
     }
@@ -118,30 +113,26 @@ contract CatalogSmartContract {
     function PayArtist(uint startgas) public {
             ContentManagementContract cmccasted = ContentManagementContract(msg.sender);
             assert((cmccasted.views() % cmccasted.viewsToPayments()) == 0);
-            ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed(0)));
+            ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed()));
             uint feedbackmostpapular = cmccastedmostpopular.getMean();
             if(feedbackmostpapular != 0 ){
                 uint feedbackcontenttopay = cmccasted.getMean();
                 if(feedbackcontenttopay != 0){
                     uint ratio = (feedbackcontenttopay * 1000)/feedbackmostpapular;
                     uint totranfer = ((cmccasted.price()*cmccastedmostpopular.viewsToPayments())/1000)*ratio;
-                    mybalance = address(this).balance;
-                    //PROBLEM 21,000 gas needed for the refound test 1 ether calculated 7524 but I need more precisely
-                    //how much ether do a TRANFER need precisly? looking the compiled code!!!!
                     cmccasted.authorAddress().transfer((totranfer));
-                    lastPayment = totranfer;
                 }
             }
             uint gasUsed = startgas - gasleft();
-            uint toRefound = ((gasUsed+8000)*tx.gasprice);
+            //21000 cost for a tranfer
+            uint toRefound = ((gasUsed+21000)*tx.gasprice);
             if(address(this).balance > toRefound ){
                 tx.origin.transfer(toRefound);
-                gasUsedForTranfer = toRefound;
             }
     }
 
     //Statistics
-    function GetStatistics() public view returns (uint[] viewsarray ){
+    function GetStatistics() external view returns (uint[] viewsarray ){
         viewsarray = new uint[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
@@ -158,7 +149,7 @@ contract CatalogSmartContract {
     }
     
     
-    function GetNewContentList(uint num) public view returns (bytes32[] result){
+    function GetNewContentList(uint num) external view returns (bytes32[] result){
         if(num >= contentManagers.length){
             result = GetContentList();
         }
@@ -171,7 +162,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetLatestByGenre(bytes32 genre_) public view returns (bytes32 result){
+    function GetLatestByGenre(bytes32 genre_) external view returns (bytes32 result){
         for (uint i = contentManagers.length; i>=0; i--){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
             if(cmccasted.genre() == genre_ ){
@@ -181,7 +172,7 @@ contract CatalogSmartContract {
         }        
     }
     
-    function GetMostPopularByGenre(bytes32 genre_) public view returns (bytes32 result){
+    function GetMostPopularByGenre(bytes32 genre_) external view returns (bytes32 result){
         uint viewsmax;
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
@@ -192,7 +183,7 @@ contract CatalogSmartContract {
         }    
     }
 
-    function GetLatestByAuthor(bytes32 author) public view returns (bytes32 result){
+    function GetLatestByAuthor(bytes32 author) external view returns (bytes32 result){
         for (uint i = contentManagers.length; i>=0; i--){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
             if(cmccasted.authorName() == author ){
@@ -202,7 +193,7 @@ contract CatalogSmartContract {
         }   
     }    
     
-    function GetMostPopularByAuthor(bytes32 author) public view returns (bytes32 result ){
+    function GetMostPopularByAuthor(bytes32 author) external view returns (bytes32 result ){
         uint viewsmax;
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
@@ -223,7 +214,7 @@ contract CatalogSmartContract {
         }
     } 
         
-    function GetMostRathed(uint8 feedbackCategory) public view returns (bytes32 result ){
+    function GetMostRathed(uint8 feedbackCategory) external view returns (bytes32 result ){
         uint maxtmpi = 0;
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
@@ -234,7 +225,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetMostRathedByGenre(bytes32 genre) public view returns (bytes32 result ){
+    function GetMostRathedByGenre(bytes32 genre) external view returns (bytes32 result ){
         uint maxmeantmp = 0;
         for (uint k = 0; k<contentManagers.length; k++){
             ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
@@ -245,7 +236,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetMostRathedByGenre(bytes32 genre, uint8 feedbackCategory) public view returns (bytes32 result ){
+    function GetMostRathedByGenre(bytes32 genre, uint8 feedbackCategory) external view returns (bytes32 result ){
         uint maxtmpi = 0;
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
@@ -256,7 +247,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetMostRathedByAuthor(bytes32 author) public view returns (bytes32 result ){
+    function GetMostRathedByAuthor(bytes32 author)external view returns (bytes32 result ){
         uint maxmeantmp = 0;
         for (uint k = 0; k<contentManagers.length; k++){
             ContentManagementContract cmccastedk = ContentManagementContract(contentManagers[k]);
@@ -267,7 +258,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetMostRathedByAuthor(bytes32 author, uint8 feedbackCategory) public view returns (bytes32 result ){
+    function GetMostRathedByAuthor(bytes32 author, uint8 feedbackCategory) external view returns (bytes32 result ){
         uint maxtmpi = 0;
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccastedi = ContentManagementContract(contentManagers[i]);
@@ -279,7 +270,7 @@ contract CatalogSmartContract {
     }
     
     
-    function GetFeedBacks() public view returns (uint[] result) {
+    function GetFeedBacks() external view returns (uint[] result) {
         result = new uint[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);
@@ -287,7 +278,7 @@ contract CatalogSmartContract {
         }
     }
     
-    function GetMeanFeedBackCategory(uint8 feedbackCategory) public view returns (uint[] result) {
+    function GetMeanFeedBackCategory(uint8 feedbackCategory) external view returns (uint[] result) {
         result = new uint[](contentManagers.length);
         for (uint i = 0; i<contentManagers.length; i++){
             ContentManagementContract cmccasted = ContentManagementContract(contentManagers[i]);

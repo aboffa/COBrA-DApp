@@ -2,14 +2,15 @@
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
 $("#actionspanelstatistic").hide();
-var web3 = new Web3(Web3.givenProvider || new Web3.providers.WebsocketProvider('ws://127.0.0.1:8545'));
-console.log(web3);
+console.log(Web3);
+console.log(Web3.givenProvider || Web3.currentProvider);
+var web3 = new Web3(Web3.currentProvider || new Web3.providers.WebsocketProvider('ws://localhost:8545'));
 
 var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[2];
+        web3.eth.defaultAccount = data[0];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -45,7 +46,6 @@ function setUpUI(isPremium) {
     //Button action for Artist Panel
     $("#inputfile").on('change', function (file) {
         contractFileSelected = $('#inputfile').prop('files')[0];
-        console.log(contractFileSelected);
     });
     $("#buttontopublishcontent").click(function () {
         //parse input
@@ -89,7 +89,7 @@ function setUpUI(isPremium) {
                         $("#artistname").val("");
                         $("#pricecontent").val("0.01");
                     })
-                    .catch(function (err){
+                    .catch(function (err) {
                         console.log(err);
                         displayErrorAfterButton("publishpanel", "Something goes wrong. Maybe you choose a name of content that already exist, or you choose a author name that already exist ");
                     });
@@ -218,7 +218,7 @@ function setUpUI(isPremium) {
                 })
                 .catch(err => console.log(err));
         }
-        if (selectedIndex >= 1 && selectedIndex <=3 ) {
+        if (selectedIndex >= 1 && selectedIndex <= 3) {
             CatalogSmartContract.methods.GetMeanFeedBackCategory(selectedIndex)
                 .call()
                 .then(function (result) {
@@ -234,6 +234,8 @@ function setUpUI(isPremium) {
                 .catch(err => console.log(err));
         }
     });
+    var followingArtists = [];
+    var followingGenres = [];
     // Button action for notification
     $("#buttontonotify").click(function () {
         let name = $("#nameauthornotify").val();
@@ -244,28 +246,11 @@ function setUpUI(isPremium) {
         else {
             if (name != "") {
                 alert("Subscribed to content published by " + name);
-                CatalogSmartContract.events.NewContentEvent(//{
-                    //filter: { autor: nameauthor } , <- doesn't work so I did it by myself
-                    //}
-                )
-                    .on('data', function (event) {
-                        if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(name) == 0) {
-                            alert("NOTIFICATION: New content published from " + name);
-                            console.log(event);
-                        }
-                    })
-                    .on('error', console.error);
+                followingArtists.push(name);
             }
             if (genre_ != "") {
                 alert("Subscribed to content of genre " + genre_);
-                CatalogSmartContract.events.NewContentEvent()
-                    .on('data', function (event) {
-                        if (web3.utils.hexToAscii(event.returnValues.genre).localeCompare(genre_) == 0) {
-                            alert("NOTIFICATION: New content published of genre " + genre_);
-                            console.log(event);
-                        }
-                    })
-                    .on('error', console.error);
+                followingGenres.push(genre_);
             }
         }
     });
@@ -316,12 +301,11 @@ function setUpUI(isPremium) {
             CatalogSmartContract.methods.GetContentPremium(namecontentbytes)
                 .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount })
                 .then(function (result) {
-                    console.log(result);
                     alert("Now you can consume content : " + namecontent);
                 })
                 .catch(function (err) {
                     console.log(err);
-                    displayErrorInForm("namecontent", "Error, are you sure this content exists?");
+                    displayErrorInForm("namecontent", "Error, are you sure this content exists? Are you already premium? Refresh the page to check");
                 });
         });
 
@@ -424,11 +408,6 @@ $("#close").click(function () {
 
 function setUpEvents() {
     //For notification
-    /*
-    Event List 
-    event ContentAccessObtainedStandard(bytes32 name, address addr); ???
-    event ContentAccessObtainedPremium(bytes32 name, address addr); ???
-    */
     //Setting up events
     CatalogSmartContract.events.ContentAccessGifted()
         .on('data', function (event) {
@@ -447,6 +426,29 @@ function setUpEvents() {
         })
         .on('error', console.error);
 
+    CatalogSmartContract.events.NewContentEvent()//{
+        //filter: { autor: nameauthor } , <- doesn't work so I did it by myself
+        //}
+        .on('data', function (event) {
+            for (let i = 0; i < followingArtists.length; i++) {
+                if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(followingArtists[i]) == 0) {
+                    alert("NOTIFICATION: New content published from " + followingArtists[i]);
+                    console.log(event);
+                }
+            }
+        })
+        .on('error', console.error);
+
+    CatalogSmartContract.events.NewContentEvent()
+        .on('data', function (event) {
+            for (let i = 0; i < followingGenres.length; i++) {
+                if (web3.utils.hexToAscii(event.returnValues.genre).localeCompare(followingGenres[i]) == 0) {
+                    alert("NOTIFICATION: New content published of genre " + followingGenres[i]);
+                    console.log(event);
+                }
+            }
+        })
+        .on('error', console.error);
 }
 
 function displayErrorInForm(idElement, stringToAdd) {
@@ -460,7 +462,7 @@ function displayErrorInForm(idElement, stringToAdd) {
         if ($('#' + newid + '').length > 0) {
             $('#' + newid + '').remove();
         }
-    }, 4000);
+    }, 5000);
 }
 
 function displayErrorAfterButton(idElement, stringToAdd) {
@@ -473,5 +475,5 @@ function displayErrorAfterButton(idElement, stringToAdd) {
         if ($('#' + newid + '').length > 0) {
             $('#' + newid + '').remove();
         }
-    }, 4000);
+    }, 5000);
 }
