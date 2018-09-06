@@ -3,13 +3,12 @@ pragma solidity ^0.4.24;
 import "./ContentManagementContract.sol";
 
 contract CatalogSmartContract {
-    //public for debug
-    uint public WeiForPremium = 1000000000000000000;
-    uint public BlockForPremium = 10;
-    address owner;
-    mapping (address => uint) public premiumCustomers;
-    mapping (bytes32 => address) public mapNameAddress;
-    address[] public contentManagers;
+    uint private WeiForPremium = 1000000000000000000;
+    uint private BlockForPremium = 10;
+    address private owner;
+    mapping (address => uint) internal premiumCustomers;
+    mapping (bytes32 => address) internal mapNameAddress;
+    address[] internal contentManagers;
 
     // Used to log
     event ContentAccessObtainedStandard(bytes32 name, address addr);
@@ -111,24 +110,24 @@ contract CatalogSmartContract {
     }
 
     function PayArtist(uint startgas) public {
-            ContentManagementContract cmccasted = ContentManagementContract(msg.sender);
-            assert((cmccasted.views() % cmccasted.viewsToPayments()) == 0);
-            ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed()));
-            uint feedbackmostpapular = cmccastedmostpopular.getMean();
-            if(feedbackmostpapular != 0 ){
-                uint feedbackcontenttopay = cmccasted.getMean();
-                if(feedbackcontenttopay != 0){
-                    uint ratio = (feedbackcontenttopay * 1000)/feedbackmostpapular;
-                    uint totranfer = ((cmccasted.price()*cmccastedmostpopular.viewsToPayments())/1000)*ratio;
-                    cmccasted.authorAddress().transfer((totranfer));
-                }
+        ContentManagementContract cmccasted = ContentManagementContract(msg.sender);
+        assert((cmccasted.views() % cmccasted.viewsToPayments()) == 0);
+        ContentManagementContract cmccastedmostpopular = ContentManagementContract(getAddressContent(GetMostRathed()));
+        uint feedbackmostpapular = cmccastedmostpopular.getMean();
+        if(feedbackmostpapular != 0 ){
+            uint feedbackcontenttopay = cmccasted.getMean();
+            if(feedbackcontenttopay != 0){
+                uint ratio = (feedbackcontenttopay * 1000)/feedbackmostpapular;
+                uint totranfer = ((cmccasted.price()*cmccastedmostpopular.viewsToPayments())/1000)*ratio;
+                cmccasted.authorAddress().transfer((totranfer));
             }
-            uint gasUsed = startgas - gasleft();
-            //21000 cost for a tranfer
-            uint toRefound = ((gasUsed+21000)*tx.gasprice);
-            if(address(this).balance > toRefound ){
-                tx.origin.transfer(toRefound);
-            }
+        }
+        uint gasUsed = startgas - gasleft();
+        // 7910 cost this piece of code
+        uint toRefound = ((gasUsed+7910)*tx.gasprice);
+        if(address(this).balance > toRefound ){
+            tx.origin.transfer(toRefound);
+        }
     }
 
     //Statistics
@@ -285,6 +284,7 @@ contract CatalogSmartContract {
             result[i] = cmccasted.getMeanFeedBackCategory(feedbackCategory);
         }
     }
+    
     function close() public onlyOwner {
         uint sumviews = 0;
         for (uint i = 0; i<contentManagers.length; i++){

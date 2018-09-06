@@ -3,20 +3,18 @@ pragma solidity ^0.4.24;
 import "./CatalogSmartContract.sol";
 
 contract ContentManagementContract{
-    //not public maybe internal
-    //no uint 
     uint public viewsToPayments = 3;
     bytes32 public genre;
     bytes32 public name;
     address public authorAddress;
     bytes32 public authorName;
     address public catalog;
-    uint public blockGenerated;
+    uint internal blockGenerated;
     uint public price;
     uint public views=0;
-    uint public feedBack1=0;
-    uint public feedBack2=0;
-    uint public feedBack3=0;
+    uint internal feedBack1=0;
+    uint internal feedBack2=0;
+    uint internal feedBack3=0;
     //to decrease approximation errors
     uint public meanMultiplier=1000;
     uint public numfeedback=0;
@@ -87,15 +85,15 @@ contract ContentManagementContract{
         _;
     }
     
-    function setEnabledStandard(address addr) public onlyCatalog() {
+    function setEnabledStandard(address addr) external onlyCatalog() {
         AuthorizedStandardCustomers[addr] = StandardRight(true,false);
     }
     
-    function setEnabledPremium(address addr, uint lastblockvalid_) public onlyCatalog {
+    function setEnabledPremium(address addr, uint lastblockvalid_) external onlyCatalog {
         AuthorizedPremiumCustomers[addr] = PremiumRight(true, lastblockvalid_,false);
     }
     
-    function retriveContentStandard() public onlyAuthorizedStandard {
+    function retriveContentStandard() external onlyAuthorizedStandard {
         views++;
         AuthorizedStandardCustomers[msg.sender].isAuthorized = false;
         AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack = true;
@@ -109,13 +107,13 @@ contract ContentManagementContract{
         
     }
     
-    function retriveContentPremium() public onlyAuthorizedPremium {
+    function retriveContentPremium() external onlyAuthorizedPremium {
         AuthorizedPremiumCustomers[msg.sender].isAuthorized = false;
         AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack = true;
         emit  notifyFeedBackAvailable(msg.sender, name);
     }
     
-    function LeaveFeedBackStandard(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackStandard{
+    function LeaveFeedBackStandard(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) external authorizedLeaveAFeedBackStandard{
         require(feedBack1_ >= 1 && feedBack1_ <= 5 && feedBack2_ >= 1 && feedBack2_ <= 5 && feedBack3_ >= 1 && feedBack2_<= 5);
         feedBack1 += feedBack1_;
         feedBack2 += feedBack2_;
@@ -124,7 +122,7 @@ contract ContentManagementContract{
         AuthorizedStandardCustomers[msg.sender].canLeaveAFeedBack = false;
     }
     
-    function LeaveFeedBackPremium(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) public authorizedLeaveAFeedBackPremium{
+    function LeaveFeedBackPremium(uint8 feedBack1_, uint8 feedBack2_, uint8 feedBack3_) external authorizedLeaveAFeedBackPremium{
         require(feedBack1_ >= 1 && feedBack1_ <= 5 && feedBack2_ >= 1 && feedBack2_ <= 5 && feedBack3_ >= 1 && feedBack2_ <= 5);
         feedBack1 += feedBack1_;
         feedBack2 += feedBack2_;
@@ -133,7 +131,7 @@ contract ContentManagementContract{
         AuthorizedPremiumCustomers[msg.sender].canLeaveAFeedBack = false;
     }
     
-    function getMean() public view returns (uint result){
+    function getMean() external view returns (uint result){
         if(numfeedback == 0){
             result = 0;
         }
@@ -142,7 +140,7 @@ contract ContentManagementContract{
         }
     }
     
-    function getMeanFeedBackCategory(uint8 feedbackCategory) public view returns (uint result){
+    function getMeanFeedBackCategory(uint8 feedbackCategory) external view returns (uint result){
         if(numfeedback == 0){
             result = 0;
         }

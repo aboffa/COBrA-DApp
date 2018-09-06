@@ -2,14 +2,16 @@
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
 $("#actionspanelstatistic").hide();
-//var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545/')); //<-- for local blockchian (Ganache)
-var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // <-- for Parity node (Ropsten)
+var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545/')); //<-- for local blockchian (Ganache) or for Geth
+//var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // <-- for Parity node (Ropsten)
 
 var CatalogSmartContract;
+var followingArtists = [];
+var followingGenres = [];
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[2];
+        web3.eth.defaultAccount = data[8];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
@@ -28,7 +30,7 @@ web3.eth.getAccounts()
         $("#actionspanelartist").show();
         $("#actionspanelstatistic").show();
         $("#loginpanel").css('background-color', '#C8E6C9');
-        setUpEvents();
+        setUpEvents(isPremium);
         setUpUI(isPremium);
 
     })
@@ -233,8 +235,6 @@ function setUpUI(isPremium) {
                 .catch(err => console.log(err));
         }
     });
-    var followingArtists = [];
-    var followingGenres = [];
     // Button action for notification
     $("#buttontonotify").click(function () {
         let name = $("#nameauthornotify").val();
@@ -324,6 +324,7 @@ function setUpUI(isPremium) {
                     console.log("Content obtained.");
                 })
                 .catch(function (err) {
+                    displayErrorAfterButton("getpanelpanel", "Are you sure you are already premium? Realod the page");
                     console.log(err);
                 });
         });
@@ -343,6 +344,7 @@ function setUpUI(isPremium) {
                     .catch(function (err) {
                         console.log(err);
                         $("#loginpanel").append("<div style='color: #ff0000' >Error, are you sure you have the rigth ammount of Ether?</div>");
+                        displayErrorAfterButton("loginpanel", "Error, are you sure you have the rigth ammount of Ether?");
                     });
             }
         });
@@ -376,10 +378,8 @@ function setUpUI(isPremium) {
                 .call()
                 .then(function (address) {
                     let ContentManagementContract = new web3.eth.Contract(abiContent, address);
-                    console.log(ContentManagementContract);
                     console.log("address of the content : ");
                     console.log(address);
-                    //alert("Now you can leave a feedback for this content. At the bottom of this page you can find the right form to do it.");
                     return ContentManagementContract.methods.retriveContentStandard()
                         .send({ value: 0, gas: 1500000, gasPrice: '2000000000', from: web3.eth.defaultAccount });
                 })
@@ -395,59 +395,59 @@ function setUpUI(isPremium) {
         });
     }
 }
-//debug 
-$("#close").click(function () {
-    CatalogSmartContract.methods.close()
-        .send({ from: web3.eth.defaultAccount })
-        .then(function (result) {
-            console.log(result);
-        })
-        .catch(err => console.log(err));
-});
 
-function setUpEvents() {
+
+function setUpEvents(isPremium) {
     //For notification
     //Setting up events
-    CatalogSmartContract.events.ContentAccessGifted()
-        .on('data', function (event) {
-            if (data.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
-                alert("NOTIFICATION: " + data.returnValues.from + " gifted you content: " + data.returnValues.name + "!");
-            }
-        })
-        .on('error', console.error);
-
-    CatalogSmartContract.events.PremiumGifted()
-        .on('data', function (event) {
-            if (event.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
-                alert("NOTIFICATION: " + event.returnValues.from + " gifted you a Premium account!");
-                location.reload();
-            }
-        })
-        .on('error', console.error);
-
-    CatalogSmartContract.events.NewContentEvent()//{
-        //filter: { autor: nameauthor } , <- doesn't work so I did it by myself
-        //}
-        .on('data', function (event) {
-            for (let i = 0; i < followingArtists.length; i++) {
-                if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(followingArtists[i]) == 0) {
-                    alert("NOTIFICATION: New content published from " + followingArtists[i]);
-                    console.log(event);
+    if (!isPremium) {
+        CatalogSmartContract.events.ContentAccessGifted()
+            .on('data', function (event) {
+                if (event.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
+                    alert("NOTIFICATION: " + event.returnValues.from + " gifted you content: " + web3.utils.hexToAscii(event.returnValues.name) + "!");
                 }
-            }
-        })
-        .on('error', console.error);
+            })
+            .on('error', console.error);
 
-    CatalogSmartContract.events.NewContentEvent()
+        CatalogSmartContract.events.PremiumGifted()
+            .on('data', function (event) {
+                if (event.returnValues.to.localeCompare(web3.eth.defaultAccount) == 0) {
+                    alert("NOTIFICATION: " + event.returnValues.from + " gifted you a Premium account!");
+                    location.reload();
+                }
+            })
+            .on('error', console.error);
+    }
+    CatalogSmartContract.events.NewContentEvent()//{
+        //filter: { autor: nameauthor } , <- doesn't work (web3 1.0.0 beta 33) so I did it by myself
+        //}
         .on('data', function (event) {
             for (let i = 0; i < followingGenres.length; i++) {
                 if (web3.utils.hexToAscii(event.returnValues.genre).localeCompare(followingGenres[i]) == 0) {
                     alert("NOTIFICATION: New content published of genre " + followingGenres[i]);
-                    console.log(event);
+                }
+            }
+            for (let i = 0; i < followingArtists.length; i++) {
+                if (web3.utils.hexToAscii(event.returnValues.autor).localeCompare(followingArtists[i]) == 0) {
+                    alert("NOTIFICATION: New content published from " + followingArtists[i]);
                 }
             }
         })
         .on('error', console.error);
+
+    //debug not userfull for the Dapp
+    $("#close").click(function () {
+        CatalogSmartContract.methods.close()
+            .send({ from: web3.eth.defaultAccount })
+            .then(function (result) {
+                console.log(result);
+                alert("COBrA Dapp is now closed! :(");
+            })
+            .catch(function (err) {
+                console.log(err);
+                alert("Only catalog owner can close the COBrA Dapp!");
+            });
+    });
 }
 
 function displayErrorInForm(idElement, stringToAdd) {
