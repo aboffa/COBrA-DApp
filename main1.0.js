@@ -2,15 +2,14 @@
 $("#actionspanelcustomer").hide();
 $("#actionspanelartist").hide();
 $("#actionspanelstatistic").hide();
-console.log(Web3);
-console.log(Web3.givenProvider || Web3.currentProvider);
-var web3 = new Web3(Web3.currentProvider || new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+//var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545/')); //<-- for local blockchian (Ganache)
+var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // <-- for Parity node (Ropsten)
 
 var CatalogSmartContract;
 web3.eth.getAccounts()
     .then(function (data) {
         console.log(data);
-        web3.eth.defaultAccount = data[0];
+        web3.eth.defaultAccount = data[2];
         $("#current-eth-address").text("Hi! Your ETH address is " + web3.eth.defaultAccount);
         return web3.eth.getBalance(web3.eth.defaultAccount);
     })
