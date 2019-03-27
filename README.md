@@ -2,17 +2,20 @@
 
 This is my project for the master course [Peer to peer systems and Blockchain](https://esami.unipi.it/esami2/programma.php?c=37721&aa=2018&cid=69&did=13)
 
-## Specification
+## Getting Started
 
-COBrA (Fair COntent Trade on the BlockchAin) is a decentralized content publishing service, which enables the authors of new contents to submit their creation (song, video, photo,...) and to be rewarded accordingly to customers’ fruition. The users of COBrA are:
+COBrA (Fair COntent Trade on the BlockchAin) is a decentralized content publishing service running on the [Ethereum](https://www.ethereum.org/) blockchain. It  enables the authors of new contents to submit their creation (song, video, photo,...) and to be rewarded accordingly to customers’ fruition. The users of COBrA are:
+
 * Customers: entities that wish to access new content. 
 * Authors: creators of a new contents 
 
 The same user can have different roles at the same time. Customers may buy two kinds of accounts: Standard and Premium. 
+
 * Standard accounts require payment for every single content access request
 *  while Premium accounts require the payment of a fixed sum covering a period of time, so enabling unrestricted access to any content for x time (expressed in block height difference) starting from the subscription time. 
 
 Once a customer has obtained access to a content, it can consume the content, at most one time. Do note that granting access to contents and content consuming are two different operations, that can happen at different times. A customer can gift another customer, by buying access rights for someone else instead of itself, both for Standard and for Premium Accounts. Premium accounts cannot gift for free single contents to other users. Every user is notified when:
+
 * It is gifted to him the access to a content
 * It is gifted to him the premium account
 * Where there is a new publication from a particular artist or a particular genre (he has to register to these events)
@@ -35,7 +38,7 @@ You can use [Parity](https://www.parity.io/)
 
 ## How to use 
 
-Once the CatalogSmartContract is deployed:
+Once the `CatalogSmartContract.sol` is deployed:
 
  * Copy the address the the new contract in the variable `catalogAddress` in the file `./src/misc/ABIandAdresses`
  * Be sure to have an active provider on localhost:8545 that support websocket (for example with [Geth](https://geth.ethereum.org/): `geth ... --ws`)
@@ -49,8 +52,9 @@ For new Content (and so for new ContentManagementContract) the user can easyly c
 
 ![image](/doc/images/General.jpg)
 
-As you can see in the previous figure COBrA DApp include, for the frontend a webpage with which the user can interact written using Javascript, CSS, Bootstrap and JQuery. The most important library is [web3.js](https://web3js.readthedocs.io/en/1.0/) (version 1.0.0 beta 33) that interact with an Ethreum node using RPC. As much as I could, I followed the principle for a good design of a DApp, at this [link](https://medium.com/@lyricalpolymath/web3-design-principles-f21db2f240c1). For the backend there are two contracts: CatalogSmartContract.sol and ContentManagementContract.sol.
+As you can see in the previous figure COBrA DApp include, for the frontend a webpage with which the user can interact written using Javascript, CSS, Bootstrap and JQuery. The most important library is [web3.js](https://web3js.readthedocs.io/en/1.0/) (version 1.0.0 beta 33) that interact with an Ethreum node using RPC. As much as I could, I followed the principle for a good design of a DApp, at this [link](https://medium.com/@lyricalpolymath/web3-design-principles-f21db2f240c1). For the backend there are two contracts: CatalogSmartContract.sol and ContentManagementContract.sol written in [Solidity](https://solidity.readthedocs.io/en/v0.4.24/) version 0.4.24.
 The first one does the following jobs:
+
 * Manage payments
 * Contain addresses and names of the Content
 * Be in the middle between users and contents
@@ -58,13 +62,16 @@ The first one does the following jobs:
 * Notify user of the various events
 
 The second one does the following jobs:
+
 * Contain authorization 
 * Contain other pieces of information (dates, visualizations, feedback, etc.)
 * Provide content to the right users
 * Register feedbacks
 * Provide data to the Catalog
 
-## Use case diagram 
+## UML Diagrams 
+
+### Use case diagram 
 ![image](/doc/images/UseCase.jpg)
 
 ### Sequence diagram 1
@@ -76,5 +83,11 @@ Sequnce for the sequence of action: the user becomes premium, gets a content and
 Sequnce for the sequence of action: the user artist creates a content and after `n` visualizations gets payed,
 
 ![image](doc/images/SequenceCreationAndPayArtist.jpg)
+
+## License
+
+This project is licensed under the MIT License
+
+## Acknowledgments
 
 For more information read the [Report](doc/Report.pdf), unfortunately, it is in Italian.
